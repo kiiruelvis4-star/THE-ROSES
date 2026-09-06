@@ -248,20 +248,20 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-white/20">
               <a
-                href="/LittleRosesEduHub-source.zip"
-                download="LittleRosesEduHub-v2.0-source.zip"
+                href="/LittleRoses-source.zip"
+                download="LittleRoses-source.zip"
                 className="flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 text-center"
               >
                 <FolderArchive className="w-4 h-4 text-slate-950" />
                 <span>Download App ZIP</span>
               </a>
               <a
-                href="/TheRoses.apk"
-                download="TheRoses.apk"
+                href="/LittleRoses.apk"
+                download="LittleRoses.apk"
                 className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 text-center"
               >
                 <Download className="w-4 h-4 text-emerald-700" />
-                <span>The Roses APK</span>
+                <span>Little Roses APK</span>
               </a>
               <button
                 onClick={() => setIsDownloadModalOpen(true)}

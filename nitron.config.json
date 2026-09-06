@@ -1,6 +1,6 @@
 {
-  "name": "The Roses",
-  "packageId": "ke.ac.theroses.academy",
+  "name": "LittleRoses",
+  "packageId": "ke.ac.littleroses.academy",
   "version": "2.0.0",
   "entry": "dist/index.html",
   "orientation": "portrait",

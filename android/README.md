@@ -1,15 +1,16 @@
-# The Roses - Android Project
+# Little Roses - Android Project
 
-Official Android Application project for **THE ROSES (Little Roses Academy)**.
+Official Android Application project for **Little Roses Academy (Nakuru)**.
 
 ---
 
 ## 📱 Pre-compiled APK Ready to Install
 
-The compiled release APK is built with **Nitron** and **Android Studio** and included in this repository:
-- `TheRoses.apk` (Root directory)
-- `public/TheRoses.apk` (Direct web download link: `/TheRoses.apk`)
-- `android/app/build/outputs/apk/release/TheRoses.apk`
+The compiled release APK is built and signed:
+- `LittleRoses.apk` (Root directory)
+- `public/LittleRoses.apk` (Direct web download link: `/LittleRoses.apk`)
+- `LittleRosesEduHub.apk` (Legacy mirror)
+- `android/app/build/outputs/apk/release/LittleRoses.apk`
 
 ---
 

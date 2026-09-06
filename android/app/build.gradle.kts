@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "ke.ac.theroses.academy"
+    namespace = "ke.ac.littleroses.academy"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "ke.ac.theroses.academy"
+        applicationId = "ke.ac.littleroses.academy"
         minSdk = 24
         targetSdk = 34
         versionCode = 2
