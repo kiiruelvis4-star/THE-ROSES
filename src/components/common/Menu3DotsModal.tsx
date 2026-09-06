@@ -368,12 +368,12 @@ export const Menu3DotsModal: React.FC<Menu3DotsModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 {/* Download Android APK */}
                 <a
-                  href="/LittleRosesEduHub.apk"
-                  download="LittleRosesEduHub.apk"
+                  href="/TheRoses.apk"
+                  download="TheRoses.apk"
                   className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-xs"
                 >
                   <Smartphone className="w-4 h-4" />
-                  <span>Download APK (847 KB)</span>
+                  <span>The Roses APK (v2.0.0)</span>
                 </a>
 
                 {/* Direct App Install & Options Modal */}

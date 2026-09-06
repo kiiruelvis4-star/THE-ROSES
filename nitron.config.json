@@ -1,7 +1,7 @@
 {
-  "name": "Little Roses EduHub",
-  "packageId": "ke.ac.littleroses.eduhub",
-  "version": "1.0.0",
+  "name": "The Roses",
+  "packageId": "ke.ac.theroses.academy",
+  "version": "2.0.0",
   "entry": "dist/index.html",
   "orientation": "portrait",
   "statusBar": true,
@@ -18,6 +18,6 @@
     "clearCacheOnStart": false
   },
   "splashScreen": {
-    "backgroundColor": "#1e3a8a"
+    "backgroundColor": "#1b3252"
   }
 }

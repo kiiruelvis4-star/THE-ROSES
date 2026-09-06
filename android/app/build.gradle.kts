@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "ke.ac.littleroses.eduhub"
+    namespace = "ke.ac.theroses.academy"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "ke.ac.littleroses.eduhub"
+        applicationId = "ke.ac.theroses.academy"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

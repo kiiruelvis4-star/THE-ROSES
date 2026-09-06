@@ -44,8 +44,8 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
   const handleDownloadAPK = () => {
     setDownloadTriggered(true);
     const a = document.createElement('a');
-    a.href = '/LittleRosesEduHub.apk';
-    a.download = 'LittleRosesEduHub.apk';
+    a.href = '/TheRoses.apk';
+    a.download = 'TheRoses.apk';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -199,12 +199,12 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
               {downloadTriggered ? (
                 <>
                   <Check className="w-5 h-5 text-emerald-100" />
-                  <span>Downloading LittleRosesEduHub.apk...</span>
+                  <span>Downloading TheRoses.apk...</span>
                 </>
               ) : (
                 <>
                   <ArrowDownCircle className="w-5 h-5" />
-                  <span>Download Android APK Directly (847 KB)</span>
+                  <span>Download The Roses APK (v2.0.0)</span>
                 </>
               )}
             </button>
@@ -353,7 +353,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
                   </div>
                   <div className="flex items-start gap-2.5">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white font-black text-[10px] shrink-0 mt-0.5">3</span>
-                    <p>Open the downloaded <strong>LittleRosesEduHub.apk</strong> file and tap <strong>Install</strong>. Done!</p>
+                    <p>Open the downloaded <strong>TheRoses.apk</strong> file and tap <strong>Install</strong>. Done!</p>
                   </div>
                 </div>
               </div>

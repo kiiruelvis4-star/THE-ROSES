@@ -256,12 +256,12 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
                 <span>Download App ZIP</span>
               </a>
               <a
-                href="/LittleRosesEduHub.apk"
-                download="LittleRosesEduHub.apk"
+                href="/TheRoses.apk"
+                download="TheRoses.apk"
                 className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-emerald-50 text-emerald-900 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 text-center"
               >
                 <Download className="w-4 h-4 text-emerald-700" />
-                <span>Download APK</span>
+                <span>The Roses APK</span>
               </a>
               <button
                 onClick={() => setIsDownloadModalOpen(true)}
