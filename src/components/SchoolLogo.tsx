@@ -1,0 +1,254 @@
+import React from 'react';
+
+interface SchoolLogoProps {
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  showText?: boolean;
+  className?: string;
+  badgeOnly?: boolean;
+}
+
+export const SchoolLogo: React.FC<SchoolLogoProps> = ({
+  size = 'md',
+  showText = false,
+  className = '',
+  badgeOnly = false
+}) => {
+  const sizeMap = {
+    xs: { dim: 'w-8 h-8', textTitle: 'text-xs', textSub: 'text-[9px]' },
+    sm: { dim: 'w-12 h-12', textTitle: 'text-sm', textSub: 'text-[10px]' },
+    md: { dim: 'w-16 h-16', textTitle: 'text-base', textSub: 'text-xs' },
+    lg: { dim: 'w-24 h-24', textTitle: 'text-xl', textSub: 'text-sm' },
+    xl: { dim: 'w-32 h-32', textTitle: 'text-2xl', textSub: 'text-base' },
+    '2xl': { dim: 'w-44 h-44', textTitle: 'text-3xl', textSub: 'text-lg' }
+  };
+
+  const currentSize = sizeMap[size];
+
+  return (
+    <div className={`inline-flex flex-col items-center justify-center ${className}`}>
+      {/* Official Little Roses Academy Nakuru Logo */}
+      <div className={`relative ${currentSize.dim} rounded-full transition-transform hover:scale-105 select-none shrink-0 drop-shadow-md`}>
+        <svg
+          viewBox="0 0 300 300"
+          className="w-full h-full"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            {/* Top Text Arc: LITTLE ROSES ACADEMY */}
+            <path
+              id="topTextArc"
+              d="M 38,150 A 112,112 0 0,1 262,150"
+              fill="none"
+            />
+            {/* Bottom Text Arc: MUCH FROM LITTLE */}
+            <path
+              id="bottomTextArc"
+              d="M 258,150 A 108,108 0 0,1 42,150"
+              fill="none"
+            />
+
+            {/* Gradients for rich 3D shading */}
+            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#25426b" />
+              <stop offset="100%" stopColor="#152843" />
+            </linearGradient>
+
+            <linearGradient id="capBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#2980d9" />
+              <stop offset="100%" stopColor="#1a5ea6" />
+            </linearGradient>
+
+            <linearGradient id="capRed" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e6333c" />
+              <stop offset="100%" stopColor="#ba1d24" />
+            </linearGradient>
+
+            <linearGradient id="capBaseBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1a5ea6" />
+              <stop offset="100%" stopColor="#0f3b6c" />
+            </linearGradient>
+
+            <linearGradient id="capBaseRed" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ba1d24" />
+              <stop offset="100%" stopColor="#7a0f14" />
+            </linearGradient>
+          </defs>
+
+          {/* 1. Outer Dark Navy Circular Frame */}
+          <circle cx="150" cy="150" r="144" fill="#1b3252" />
+
+          {/* 2. Inner Sand/Cream Background Circle */}
+          <circle cx="150" cy="150" r="132" fill="#eddcc5" />
+
+          {/* 3. Top Arc Text: LITTLE ROSES ACADEMY */}
+          <text
+            fontFamily="Arial, Helvetica, sans-serif"
+            fontSize="18.5"
+            fontWeight="900"
+            fill="#111c2e"
+            letterSpacing="2.8"
+          >
+            <textPath href="#topTextArc" startOffset="50%" textAnchor="middle">
+              LITTLE ROSES ACADEMY
+            </textPath>
+          </text>
+
+          {/* 4. Subtitle: NAKURU with decorative double accent */}
+          <g>
+            <text
+              x="150"
+              y="91"
+              fontFamily="Arial, Helvetica, sans-serif"
+              fontSize="21"
+              fontWeight="900"
+              fill="#111c2e"
+              textAnchor="middle"
+              letterSpacing="2"
+            >
+              NAKURU
+            </text>
+            {/* Double underline notch below Nakuru */}
+            <path
+              d="M 106,94.5 L 146,94.5 M 154,94.5 L 194,94.5"
+              stroke="#111c2e"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </g>
+
+          {/* 5. Bottom Arc Text: MUCH FROM LITTLE */}
+          <text
+            fontFamily="Arial, Helvetica, sans-serif"
+            fontSize="18"
+            fontWeight="900"
+            fill="#111c2e"
+            letterSpacing="3.6"
+          >
+            <textPath href="#bottomTextArc" startOffset="50%" textAnchor="middle">
+              MUCH FROM LITTLE
+            </textPath>
+          </text>
+
+          {/* 6. Red Laurel Wreath (Symmetrical Leaves flanking the Shield) */}
+          <g fill="#c0262d" stroke="#c0262d" strokeLinejoin="round">
+            {/* Left Branch stem */}
+            <path
+              d="M 88,225 C 75,205 72,175 80,150"
+              fill="none"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            {/* Left Leaves */}
+            <path d="M 86,220 C 78,218 72,212 76,206 C 81,208 86,214 86,220 Z" />
+            <path d="M 80,206 C 70,202 66,194 72,188 C 77,192 81,199 80,206 Z" />
+            <path d="M 75,190 C 64,183 62,174 69,169 C 74,175 77,183 75,190 Z" />
+            <path d="M 74,172 C 65,163 65,153 72,150 C 76,157 77,165 74,172 Z" />
+            <path d="M 76,154 C 70,143 73,134 81,133 C 83,142 81,149 76,154 Z" />
+
+            {/* Inner Left Leaves */}
+            <path d="M 94,220 C 92,212 96,204 102,206 C 101,213 97,218 94,220 Z" />
+            <path d="M 88,202 C 87,193 93,186 99,189 C 97,197 92,201 88,202 Z" />
+            <path d="M 84,182 C 84,173 91,168 96,172 C 93,179 88,183 84,182 Z" />
+            <path d="M 83,163 C 85,154 92,151 96,156 C 92,162 87,165 83,163 Z" />
+
+            {/* Right Branch stem */}
+            <path
+              d="M 212,225 C 225,205 228,175 220,150"
+              fill="none"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            {/* Right Leaves */}
+            <path d="M 214,220 C 222,218 228,212 224,206 C 219,208 214,214 214,220 Z" />
+            <path d="M 220,206 C 230,202 234,194 228,188 C 223,192 219,199 220,206 Z" />
+            <path d="M 225,190 C 236,183 238,174 231,169 C 226,175 223,183 225,190 Z" />
+            <path d="M 226,172 C 235,163 235,153 228,150 C 224,157 223,165 226,172 Z" />
+            <path d="M 224,154 C 230,143 227,134 219,133 C 217,142 219,149 224,154 Z" />
+
+            {/* Inner Right Leaves */}
+            <path d="M 206,220 C 208,212 204,204 198,206 C 199,213 203,218 206,220 Z" />
+            <path d="M 212,202 C 213,193 207,186 201,189 C 203,197 208,201 212,202 Z" />
+            <path d="M 216,182 C 216,173 209,168 204,172 C 207,179 212,183 216,182 Z" />
+            <path d="M 217,163 C 215,154 208,151 204,156 C 208,162 213,165 217,163 Z" />
+          </g>
+
+          {/* 7. Center Heraldic Shield */}
+          {/* Outer Shield Outline */}
+          <path
+            d="M 108,103 L 138,103 L 138,98 L 162,98 L 162,103 L 192,103 L 208,114 L 208,180 C 208,198 178,215 150,222 C 122,215 92,198 92,180 L 92,114 Z"
+            fill="url(#shieldGrad)"
+            stroke="#1b3252"
+            strokeWidth="3.5"
+          />
+
+          {/* Inner White Shield Contour Line */}
+          <path
+            d="M 113,108 L 135,108 L 135,103 L 165,103 L 165,108 L 187,108 L 202,118 L 202,177 C 202,192 175,208 150,214 C 125,208 98,192 98,177 L 98,118 Z"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2.8"
+          />
+
+          {/* 8. Split Blue & Red Graduation Mortarboard Cap */}
+          {/* Cap Diamond Top - Left Blue Half */}
+          <path
+            d="M 150,126 L 115,144 L 150,158 L 150,126 Z"
+            fill="url(#capBlue)"
+          />
+          {/* Cap Diamond Top - Right Red Half */}
+          <path
+            d="M 150,126 L 185,144 L 150,158 L 150,126 Z"
+            fill="url(#capRed)"
+          />
+
+          {/* Cap Base Underneath - Left Blue Half */}
+          <path
+            d="M 130,150 L 150,158 L 150,188 C 144,186 138,181 130,172 L 130,150 Z"
+            fill="url(#capBaseBlue)"
+          />
+          {/* Cap Base Underneath - Right Red Half */}
+          <path
+            d="M 170,150 L 150,158 L 150,188 C 156,186 162,181 170,172 L 170,150 Z"
+            fill="url(#capBaseRed)"
+          />
+
+          {/* Cap Center Apex Button & Tassel */}
+          <circle cx="150" cy="142" r="2.5" fill="#2980d9" />
+          {/* Blue Tassel Ribbon draped to the left */}
+          <path
+            d="M 150,142 C 138,145 125,150 120,165 L 118,178"
+            fill="none"
+            stroke="#2980d9"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          {/* Tassel Fringe */}
+          <path
+            d="M 116,176 L 120,176 L 121,185 L 115,185 Z"
+            fill="#2980d9"
+          />
+        </svg>
+      </div>
+
+      {/* Optional Full Typography Brand */}
+      {showText && !badgeOnly && (
+        <div className="mt-3 text-center">
+          <h1 className={`font-extrabold tracking-tight text-slate-900 dark:text-white ${currentSize.textTitle}`}>
+            LITTLE ROSES <span className="text-rose-600 dark:text-rose-500">ACADEMY</span>
+          </h1>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
+            NAKURU • CBC EDUHUB
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <div className="h-[1px] w-6 bg-rose-400" />
+            <span className="text-xs italic font-serif text-rose-700 dark:text-rose-400">
+              "Much from Little"
+            </span>
+            <div className="h-[1px] w-6 bg-rose-400" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+

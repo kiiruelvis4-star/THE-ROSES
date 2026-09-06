@@ -1,0 +1,23 @@
+{
+  "name": "Little Roses EduHub",
+  "packageId": "ke.ac.littleroses.eduhub",
+  "version": "1.0.0",
+  "entry": "dist/index.html",
+  "orientation": "portrait",
+  "statusBar": true,
+  "permissions": [
+    "INTERNET",
+    "ACCESS_NETWORK_STATE"
+  ],
+  "icon": "./public/pwa-512x512.png",
+  "network": {
+    "cleartext": true
+  },
+  "webview": {
+    "backButton": "history",
+    "clearCacheOnStart": false
+  },
+  "splashScreen": {
+    "backgroundColor": "#1e3a8a"
+  }
+}
