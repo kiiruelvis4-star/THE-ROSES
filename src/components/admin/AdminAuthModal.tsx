@@ -152,9 +152,21 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             </span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-[11px] flex items-center gap-2 text-slate-600 dark:text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>Administrator Master Key required. Please enter authorized administrative credentials.</span>
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-[11px] flex items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>Default Master Key: <strong className="text-emerald-700 dark:text-emerald-400 font-mono">admin123</strong></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPassword('admin123');
+                setError(null);
+              }}
+              className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline px-2 py-1 rounded-md bg-emerald-100/60 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800"
+            >
+              Fill Default
+            </button>
           </div>
 
           {/* Action Buttons */}

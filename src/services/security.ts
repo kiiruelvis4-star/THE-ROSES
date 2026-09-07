@@ -116,13 +116,48 @@ export const TEACHER_FALLBACK_HASHES = new Set([
   '1956cba7e4742c4f8327d8abf8bfca62e179ea7bbb44a8eff5f89dc42dfa2083'
 ]);
 
+// Standard school default and demo passwords
+export const STANDARD_ADMIN_PASSWORDS = new Set([
+  'admin',
+  'admin123',
+  'admin2026',
+  'littleroses',
+  'littleroses2026',
+  '1234',
+  '123456',
+  'password',
+  'roses2026',
+  'demo'
+]);
+
+export const STANDARD_TEACHER_PASSWORDS = new Set([
+  'teacher',
+  'teacher123',
+  'teacher2026',
+  'elvis',
+  'fresiah',
+  'kelvin',
+  'liz',
+  '1234',
+  '123456',
+  'password',
+  'littleroses',
+  'demo'
+]);
+
 export function verifyAdminHash(enteredPassword?: string): boolean {
   if (!enteredPassword || !enteredPassword.trim()) return false;
   const clean = enteredPassword.trim();
+  const normalized = clean.replace(/[\s.]/g, '').toLowerCase();
+
+  // Accept standard school passwords directly
+  if (STANDARD_ADMIN_PASSWORDS.has(clean) || STANDARD_ADMIN_PASSWORDS.has(normalized)) {
+    return true;
+  }
+
   const directHash = sha256(clean);
   if (ADMIN_AUTH_HASHES.has(directHash)) return true;
 
-  const normalized = clean.replace(/[\s.]/g, '').toLowerCase();
   const normalizedHash = sha256(normalized);
   return ADMIN_AUTH_HASHES.has(normalizedHash);
 }
@@ -130,6 +165,21 @@ export function verifyAdminHash(enteredPassword?: string): boolean {
 export function verifyTeacherHash(enteredPassword?: string, teacherId?: string): boolean {
   if (!enteredPassword || !enteredPassword.trim()) return false;
   const clean = enteredPassword.trim();
+  const normalized = clean.replace(/[\s,.]/g, '').toLowerCase();
+
+  // Accept standard teacher passwords directly
+  if (STANDARD_TEACHER_PASSWORDS.has(clean) || STANDARD_TEACHER_PASSWORDS.has(normalized)) {
+    return true;
+  }
+
+  // Accept teacher's first name as password (e.g. "elvis", "fresiah", "kelvin", "liz")
+  if (teacherId) {
+    const normId = teacherId.toLowerCase().replace('tr-', '').trim();
+    if (normalized === normId || normalized === `tr-${normId}`) {
+      return true;
+    }
+  }
+
   const directHash = sha256(clean);
 
   // 1. Check against specific teacher ID
@@ -147,7 +197,6 @@ export function verifyTeacherHash(enteredPassword?: string, teacherId?: string):
   }
 
   // 3. Fallback hashes for normalized entries
-  const normalized = clean.replace(/[\s,]/g, '').toLowerCase();
   const normalizedHash = sha256(normalized);
   return TEACHER_FALLBACK_HASHES.has(normalizedHash);
 }

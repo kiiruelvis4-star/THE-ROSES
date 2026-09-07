@@ -69,9 +69,19 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
   const handleBiometricUnlock = async () => {
     setError(null);
     setIsProcessing(true);
-    setBiometricStatusMsg('Please scan your fingerprint or face...');
+    setBiometricStatusMsg('Verifying device authorization...');
 
     try {
+      // Check if Admin revoked this device lock in Supabase
+      const deviceStatus = await supabaseSync.verifyDeviceStatus(boundTeacher.id, storage.getDeviceUniqueId());
+      if (deviceStatus === 'REVOKED') {
+        setIsProcessing(false);
+        setBiometricStatusMsg('');
+        setError('Your device binding has been revoked by the Administrator. Please re-activate.');
+        return;
+      }
+
+      setBiometricStatusMsg('Please scan your fingerprint or face...');
       const authRes = await authenticateWithBiometrics(deviceActivation?.biometricCredentialId);
       if (authRes.success) {
         storage.setTeacherAuthenticated(true);
@@ -91,7 +101,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
   };
 
   // Handle Password Login for bound teacher
-  const handlePasswordUnlock = (e: React.FormEvent) => {
+  const handlePasswordUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!password.trim()) {
@@ -100,18 +110,25 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
     }
 
     setIsProcessing(true);
-    setTimeout(() => {
-      if (storage.verifyTeacherPassword(password, boundTeacher.id)) {
-        storage.setTeacherAuthenticated(true);
-        storage.setAuthenticatedTeacherId(boundTeacher.id);
-        setIsProcessing(false);
-        setPassword('');
-        onSuccess(boundTeacher);
-      } else {
-        setIsProcessing(false);
-        setError('Incorrect password for ' + boundTeacher.name + '.');
-      }
-    }, 250);
+
+    // Check if Admin revoked this device lock in Supabase
+    const deviceStatus = await supabaseSync.verifyDeviceStatus(boundTeacher.id, storage.getDeviceUniqueId());
+    if (deviceStatus === 'REVOKED') {
+      setIsProcessing(false);
+      setError('Your device binding has been revoked by the Administrator. Please re-activate.');
+      return;
+    }
+
+    if (storage.verifyTeacherPassword(password, boundTeacher.id)) {
+      storage.setTeacherAuthenticated(true);
+      storage.setAuthenticatedTeacherId(boundTeacher.id);
+      setIsProcessing(false);
+      setPassword('');
+      onSuccess(boundTeacher);
+    } else {
+      setIsProcessing(false);
+      setError('Incorrect password for ' + boundTeacher.name + '.');
+    }
   };
 
   // Handle First-Time Device Activation & Binding
@@ -158,10 +175,16 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
       status: 'ACTIVE'
     };
 
-    // Store activation locally & sync to Supabase
-    storage.setDeviceActivation(newActivation);
-    await supabaseSync.registerDeviceLock(newActivation);
+    // Check backend Supabase binding: enforce that teacher cannot bind second device without Admin reset
+    const regResult = await supabaseSync.registerDeviceLock(newActivation);
+    if (regResult && !regResult.success && regResult.error) {
+      setIsProcessing(false);
+      setError(regResult.error);
+      return;
+    }
 
+    // Store activation locally
+    storage.setDeviceActivation(newActivation);
     storage.setTeacherAuthenticated(true);
     storage.setAuthenticatedTeacherId(selectedTeacher.id);
     setIsProcessing(false);
@@ -303,6 +326,19 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                    <span>Default: <strong className="font-mono text-blue-600 dark:text-blue-400">teacher123</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPassword('teacher123');
+                        setError(null);
+                      }}
+                      className="text-[10px] font-bold text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800"
+                    >
+                      Fill Default
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -388,6 +424,19 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                  <span>Default: <strong className="font-mono text-blue-600 dark:text-blue-400">teacher123</strong> (or teacher's name)</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPassword('teacher123');
+                      setError(null);
+                    }}
+                    className="text-[10px] font-bold text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800"
+                  >
+                    Fill Default
                   </button>
                 </div>
               </div>

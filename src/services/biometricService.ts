@@ -10,6 +10,25 @@ export interface BiometricStatus {
 }
 
 /**
+ * Derives the active Relying Party ID from the real deployed browser origin.
+ * Never uses hardcoded or placeholder domains.
+ */
+function getActiveRelyingPartyId(): string | undefined {
+  if (typeof window === 'undefined' || !window.location?.hostname) {
+    return undefined;
+  }
+  const host = window.location.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'localhost';
+  }
+  // Use the exact active deployed host (e.g. your custom domain or cloud run app)
+  if (host.includes('.')) {
+    return host;
+  }
+  return undefined;
+}
+
+/**
  * Check if the user's device/phone supports native biometric verification
  * (Android Fingerprint / Face Unlock / Screen Lock PIN)
  */
@@ -57,12 +76,17 @@ export async function registerBiometrics(
 
     const userIdBytes = new Uint8Array(teacherId.split('').map(c => c.charCodeAt(0)));
 
+    const rpId = getActiveRelyingPartyId();
+    const rpEntity: PublicKeyCredentialRpEntity = {
+      name: 'Little Roses Academy EduHub'
+    };
+    if (rpId) {
+      rpEntity.id = rpId;
+    }
+
     const createOptions: PublicKeyCredentialCreationOptions = {
       challenge,
-      rp: {
-        name: 'Little Roses Academy EduHub',
-        id: window.location.hostname
-      },
+      rp: rpEntity,
       user: {
         id: userIdBytes,
         name: teacherId,
@@ -115,21 +139,32 @@ export async function authenticateWithBiometrics(
     const challenge = new Uint8Array(32);
     window.crypto.getRandomValues(challenge);
 
+    const rpId = getActiveRelyingPartyId();
     const requestOptions: PublicKeyCredentialRequestOptions = {
       challenge,
-      rpId: window.location.hostname,
       userVerification: 'required',
       timeout: 60000
     };
+    if (rpId) {
+      requestOptions.rpId = rpId;
+    }
 
     if (credentialId) {
-      requestOptions.allowCredentials = [
-        {
-          type: 'public-key',
-          id: Uint8Array.from(atob(credentialId.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
-          transports: ['internal']
-        }
-      ];
+      let base64 = credentialId.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4 !== 0) {
+        base64 += '=';
+      }
+      try {
+        requestOptions.allowCredentials = [
+          {
+            type: 'public-key',
+            id: Uint8Array.from(atob(base64), c => c.charCodeAt(0)),
+            transports: ['internal']
+          }
+        ];
+      } catch (decodeErr) {
+        console.warn('Could not decode credentialId, continuing without allowCredentials:', decodeErr);
+      }
     }
 
     const assertion = await navigator.credentials.get({

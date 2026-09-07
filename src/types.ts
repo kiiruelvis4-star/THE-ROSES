@@ -116,6 +116,7 @@ export interface UnifiedResource {
   fileSize?: string;
   fileType?: 'pdf' | 'doc' | 'docx' | 'image' | 'other';
   fileDataUrl?: string;
+  storagePath?: string;
   rawTextContent?: string;
   published: boolean;
   createdAt: string;

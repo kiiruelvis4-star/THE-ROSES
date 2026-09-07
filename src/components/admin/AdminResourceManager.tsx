@@ -74,6 +74,7 @@ export const AdminResourceManager: React.FC = () => {
   const [formFileDataUrl, setFormFileDataUrl] = useState('');
   const [formRawText, setFormRawText] = useState('');
   const [formPublished, setFormPublished] = useState<boolean>(true);
+  const [selectedPhysicalFile, setSelectedPhysicalFile] = useState<File | null>(null);
 
   // Subscribe to reactive updates
   useEffect(() => {
@@ -98,6 +99,7 @@ export const AdminResourceManager: React.FC = () => {
     setFormFileDataUrl('');
     setFormRawText('');
     setFormPublished(true);
+    setSelectedPhysicalFile(null);
     setIsEditorOpen(true);
   };
 
@@ -116,6 +118,7 @@ export const AdminResourceManager: React.FC = () => {
     setFormFileDataUrl(item.fileDataUrl || '');
     setFormRawText(item.rawTextContent || '');
     setFormPublished(item.published);
+    setSelectedPhysicalFile(null);
     setIsEditorOpen(true);
   };
 
@@ -123,6 +126,7 @@ export const AdminResourceManager: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedPhysicalFile(file);
     setFormFileName(file.name);
     setFormFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
 
@@ -157,6 +161,7 @@ export const AdminResourceManager: React.FC = () => {
       fileSize: formInputType === 'FILE' ? formFileSize : undefined,
       fileType: formInputType === 'FILE' ? formFileType : undefined,
       fileDataUrl: formInputType === 'FILE' ? formFileDataUrl : undefined,
+      storagePath: editingItem?.storagePath,
       rawTextContent: formInputType === 'RAW_TEXT' ? formRawText : undefined,
       published: formPublished,
       createdAt: editingItem ? editingItem.createdAt : new Date().toISOString(),
@@ -167,8 +172,9 @@ export const AdminResourceManager: React.FC = () => {
     };
 
     setIsSyncing(true);
-    const result = await supabaseSync.saveResource(resourceToSave);
+    const result = await supabaseSync.saveResource(resourceToSave, selectedPhysicalFile || undefined);
     setIsSyncing(false);
+    setSelectedPhysicalFile(null);
     setSyncNotice(result.message);
     setTimeout(() => setSyncNotice(null), 4000);
 
@@ -177,10 +183,10 @@ export const AdminResourceManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await supabaseSync.deleteResource(id);
+    const result = await supabaseSync.deleteResource(id);
     setResources(storage.getUnifiedResources());
     setDeleteConfirmationId(null);
-    setSyncNotice('Resource deleted.');
+    setSyncNotice(result.message || 'Resource removed.');
     setTimeout(() => setSyncNotice(null), 3000);
   };
 
