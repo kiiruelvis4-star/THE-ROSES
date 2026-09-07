@@ -79,8 +79,62 @@ export type TermName = 'Term 1' | 'Term 2' | 'Term 3';
 
 export type CBCRating = 'EE' | 'ME' | 'AE' | 'BE'; // Exceeding Expectations, Meeting Expectations, Approaching Expectations, Below Expectations
 
-export type AppScreen = 'splash' | 'portal-select' | 'teacher' | 'learner' | 'admin';
-export type UserRole = 'teacher' | 'learner' | 'admin';
+export type AppScreen = 'splash' | 'portal-select' | 'teacher' | 'admin' | 'learner';
+export type UserRole = 'teacher' | 'admin';
+
+export type UnifiedResourceType = 
+  | 'Schemes of Work'
+  | 'Lesson Plans'
+  | 'Teacher Notes'
+  | 'Assessments/CATs'
+  | 'Assignments'
+  | 'Exams'
+  | 'Timetables'
+  | 'Other Teacher Resources';
+
+export const UNIFIED_RESOURCE_TYPES: UnifiedResourceType[] = [
+  'Schemes of Work',
+  'Lesson Plans',
+  'Teacher Notes',
+  'Assessments/CATs',
+  'Assignments',
+  'Exams',
+  'Timetables',
+  'Other Teacher Resources'
+];
+
+export interface UnifiedResource {
+  id: string;
+  title: string;
+  resourceType: UnifiedResourceType;
+  grade: GradeLevel | 'All Grades';
+  subject: SubjectName | 'All Subjects';
+  term?: TermName;
+  description: string;
+  inputType: 'FILE' | 'RAW_TEXT';
+  fileName?: string;
+  fileSize?: string;
+  fileType?: 'pdf' | 'doc' | 'docx' | 'image' | 'other';
+  fileDataUrl?: string;
+  rawTextContent?: string;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  authorName?: string;
+  authorRole?: 'ADMIN' | 'TEACHER';
+  version?: number;
+}
+
+export interface DeviceActivationInfo {
+  teacherId: string;
+  teacherName: string;
+  deviceId: string;
+  deviceName?: string;
+  activatedAt: string;
+  biometricEnabled: boolean;
+  biometricCredentialId?: string;
+  status: 'ACTIVE' | 'REVOKED';
+}
 
 export interface StaffMember {
   id: string;
@@ -129,11 +183,12 @@ export interface BellPeriodSlot {
 
 export type AdminTab =
   | 'overview'
+  | 'resources'
+  | 'devices'
   | 'staff'
   | 'learners'
   | 'documents'
   | 'curriculum'
-  | 'resources'
   | 'timetable'
   | 'notices'
   | 'settings';

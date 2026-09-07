@@ -156,20 +156,20 @@ export const PWAInstallGuideModal: React.FC<PWAInstallGuideModalProps> = ({
                       </div>
                       <div>
                         <div className="font-extrabold text-xs text-emerald-950 dark:text-emerald-200">
-                          The Roses APK • Direct Android Download
+                          Little Roses Academy APK • Direct Android Download
                         </div>
                         <div className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">
-                          TheRoses.apk • v2.0.0 (The Roses Release)
+                          LittleRosesAcademy.apk • v2.0.0 (Official Release)
                         </div>
                       </div>
                     </div>
                   </div>
                   <a
-                    href="/TheRoses.apk"
-                    download="TheRoses.apk"
+                    href="/LittleRosesAcademy.apk"
+                    download="LittleRosesAcademy.apk"
                     className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
                   >
-                    <Download className="w-4 h-4" /> Download The Roses APK to Phone
+                    <Download className="w-4 h-4" /> Download Little Roses Academy APK
                   </a>
                   <p className="text-[10px] text-emerald-800/70 dark:text-emerald-300/70 text-center">
                     Tap the downloaded file on your phone and tap <strong>Install</strong>.

@@ -21,7 +21,9 @@ import {
   BlankLessonPlanSheet,
   StaffMember,
   TeacherProfile,
-  BellPeriodSlot
+  BellPeriodSlot,
+  UnifiedResource,
+  DeviceActivationInfo
 } from '../types';
 import { 
   INITIAL_STUDENTS, 
@@ -36,6 +38,7 @@ import {
   INITIAL_NOTICES,
   INITIAL_STAFF
 } from '../data/initialData';
+import { INITIAL_UNIFIED_RESOURCES } from '../data/initialUnifiedResources';
 import { verifyAdminHash, verifyTeacherHash } from './security';
 import {
   TEACHER_PROFILES,
@@ -88,7 +91,11 @@ const STORAGE_KEYS = {
   TEACHER_PROFILES: 'lra_teacher_profiles_v1',
   MASTER_TEACHER_TIMETABLE: 'lra_master_teacher_timetable_v1',
   RAW_SAVED_SCHEMES: 'lra_raw_saved_schemes_v1',
-  CURRICULUM_SETTINGS: 'lra_curriculum_settings_v1'
+  CURRICULUM_SETTINGS: 'lra_curriculum_settings_v1',
+  UNIFIED_RESOURCES: 'lra_unified_resources_v2',
+  DEVICE_ACTIVATION: 'lra_device_activation_v2',
+  DEVICE_ID: 'lra_device_unique_id_v2',
+  ALL_DEVICE_LOCKS: 'lra_all_device_locks_v2'
 };
 
 export interface CurriculumSettings {
@@ -752,6 +759,93 @@ class StorageService {
     };
   }
 
+  // ==========================================
+  // DEVICE BINDING & TEACHER LOCKING (WebAuthn / Biometrics)
+  // ==========================================
+  public getDeviceUniqueId(): string {
+    let deviceId = this.getItem<string | null>(STORAGE_KEYS.DEVICE_ID, null);
+    if (!deviceId) {
+      deviceId = 'dev-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36);
+      this.setItem(STORAGE_KEYS.DEVICE_ID, deviceId);
+    }
+    return deviceId;
+  }
+
+  public getDeviceActivation(): DeviceActivationInfo | null {
+    return this.getItem<DeviceActivationInfo | null>(STORAGE_KEYS.DEVICE_ACTIVATION, null);
+  }
+
+  public setDeviceActivation(info: DeviceActivationInfo): void {
+    this.setItem(STORAGE_KEYS.DEVICE_ACTIVATION, info);
+    this.setAuthenticatedTeacherId(info.teacherId);
+
+    // Also track in master list of device locks for Admin oversight
+    const allLocks = this.getAllDeviceLocks();
+    const existingIdx = allLocks.findIndex(l => l.teacherId === info.teacherId);
+    if (existingIdx >= 0) {
+      allLocks[existingIdx] = info;
+    } else {
+      allLocks.push(info);
+    }
+    this.setItem(STORAGE_KEYS.ALL_DEVICE_LOCKS, allLocks);
+    this.notify();
+  }
+
+  public clearDeviceActivation(): void {
+    localStorage.removeItem(STORAGE_KEYS.DEVICE_ACTIVATION);
+    this.setAuthenticatedTeacherId(null);
+    this.setTeacherAuthenticated(false);
+    this.notify();
+  }
+
+  public getAllDeviceLocks(): DeviceActivationInfo[] {
+    return this.getItem<DeviceActivationInfo[]>(STORAGE_KEYS.ALL_DEVICE_LOCKS, []);
+  }
+
+  public revokeDeviceLock(teacherId: string): void {
+    // Revoke current device if matches
+    const current = this.getDeviceActivation();
+    if (current && current.teacherId === teacherId) {
+      current.status = 'REVOKED';
+      this.setItem(STORAGE_KEYS.DEVICE_ACTIVATION, current);
+    }
+
+    const allLocks = this.getAllDeviceLocks();
+    const target = allLocks.find(l => l.teacherId === teacherId);
+    if (target) {
+      target.status = 'REVOKED';
+      this.setItem(STORAGE_KEYS.ALL_DEVICE_LOCKS, allLocks);
+    }
+    this.notify();
+  }
+
+  // ==========================================
+  // UNIFIED RESOURCES MANAGEMENT (Admin + Cloud Sync)
+  // ==========================================
+  public getUnifiedResources(): UnifiedResource[] {
+    return this.getItem<UnifiedResource[]>(STORAGE_KEYS.UNIFIED_RESOURCES, INITIAL_UNIFIED_RESOURCES);
+  }
+
+  public saveUnifiedResources(resources: UnifiedResource[]): void {
+    this.setItem(STORAGE_KEYS.UNIFIED_RESOURCES, resources);
+  }
+
+  public saveSingleUnifiedResource(resource: UnifiedResource): void {
+    const list = this.getUnifiedResources();
+    const idx = list.findIndex(r => r.id === resource.id);
+    if (idx >= 0) {
+      list[idx] = resource;
+    } else {
+      list.unshift(resource);
+    }
+    this.saveUnifiedResources(list);
+  }
+
+  public deleteUnifiedResource(id: string): void {
+    const list = this.getUnifiedResources().filter(r => r.id !== id);
+    this.saveUnifiedResources(list);
+  }
+
   public getClockSettings() {
     const sys = this.getSystemConfig();
     return sys.clockSettings || {
@@ -932,6 +1026,10 @@ class StorageService {
   public resetToFactoryDemo(): void {
     localStorage.clear();
     this.notify();
+  }
+
+  public resetAllDataToDefaults(): void {
+    this.resetToFactoryDemo();
   }
 
   // Export JSON backup

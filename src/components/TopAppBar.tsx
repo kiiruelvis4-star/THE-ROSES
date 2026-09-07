@@ -3,37 +3,29 @@ import {
   MoreVertical, 
   ArrowLeft, 
   Bell, 
-  Calendar as CalendarIcon, 
-  User, 
-  Sparkles,
-  BookOpen,
-  GraduationCap,
-  Sun,
-  Moon,
-  ShieldCheck,
-  Clock,
-  Download
+  Sun, 
+  Moon, 
+  ShieldCheck, 
+  UserCheck,
+  LogOut
 } from 'lucide-react';
 import { SchoolLogo } from './SchoolLogo';
 import { Menu3DotsModal } from './common/Menu3DotsModal';
-import { DownloadAppModal } from './common/DownloadAppModal';
 import { storage } from '../services/storageService';
 
 interface TopAppBarProps {
   title?: string;
   subtitle?: string;
-  currentRole?: 'teacher' | 'learner' | 'admin' | null;
-  activeRole?: 'teacher' | 'learner' | 'admin' | null;
-  studentName?: string;
+  currentRole?: 'teacher' | 'admin' | null;
+  activeRole?: 'teacher' | 'admin' | null;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
-  onSwitchPortal?: (role: 'teacher' | 'learner' | 'admin') => void;
-  onSwitchRole?: (role?: 'teacher' | 'learner' | 'admin') => void;
   onGoHome?: () => void;
   onBack?: () => void;
   showBack?: boolean;
   unreadNoticesCount?: number;
   onOpenNotices?: () => void;
+  onSignOut?: () => void;
 }
 
 export const TopAppBar: React.FC<TopAppBarProps> = ({
@@ -41,73 +33,39 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   subtitle,
   currentRole,
   activeRole,
-  studentName,
   isDarkMode = false,
   onToggleDarkMode,
-  onSwitchPortal,
-  onSwitchRole,
   onGoHome,
   onBack,
   showBack = false,
-  unreadNoticesCount = 2,
-  onOpenNotices
+  unreadNoticesCount = 0,
+  onOpenNotices,
+  onSignOut
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [timeString, setTimeString] = useState<string>('');
-  const [systemSchoolName, setSystemSchoolName] = useState(() => {
-    return storage.getSystemConfig().school_metadata.school_name || 'Little Roses Academy';
-  });
 
-  // Real-time device clock syncing with clockSettings: HH:MM:SS, displaySeconds: true, device_local_time
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      setTimeString(`${hours}:${minutes}:${seconds}`);
+      setTimeString(now.toLocaleTimeString('en-GB', { hour12: false }));
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setSystemSchoolName(storage.getSystemConfig().school_metadata.school_name);
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const effectiveTitle = title || systemSchoolName;
-
-  // Normalize role from activeRole or currentRole
   const effectiveRole = activeRole !== undefined ? activeRole : currentRole;
-
-  const handleLogoClick = () => {
-    if (typeof onGoHome === 'function') {
-      onGoHome();
-    } else if (typeof onSwitchPortal === 'function' && effectiveRole) {
-      onSwitchPortal(effectiveRole === 'teacher' ? 'learner' : 'teacher');
-    } else if (typeof onSwitchRole === 'function' && effectiveRole) {
-      onSwitchRole(effectiveRole === 'teacher' ? 'learner' : 'teacher');
-    }
-  };
-
-  const handleRoleSwitch = (targetRole: 'teacher' | 'learner' | 'admin') => {
-    if (typeof onSwitchPortal === 'function') {
-      onSwitchPortal(targetRole);
-    }
-    if (typeof onSwitchRole === 'function') {
-      onSwitchRole(targetRole);
-    }
-  };
-
+  const effectiveTitle = title || 'LITTLE ROSES ACADEMY';
   const activeTeacherName = storage.getActiveTeacherProfile()?.name || 'Faculty';
 
-  const computedSubtitle = subtitle || (studentName ? `Learner: ${studentName}` : (effectiveRole === 'teacher' ? `Nakuru • ${activeTeacherName}` : effectiveRole === 'learner' ? 'Nakuru • Learner Portal' : effectiveRole === 'admin' ? 'Nakuru • Administration Hub' : 'Nakuru • CBC EduHub'));
+  const computedSubtitle = subtitle || (
+    effectiveRole === 'teacher' 
+      ? `Nakuru • ${activeTeacherName}` 
+      : effectiveRole === 'admin' 
+      ? 'Nakuru • Administration Hub' 
+      : 'Nakuru • CBC Platform'
+  );
 
   return (
     <>
@@ -126,24 +84,22 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             ) : null}
 
             <div 
-              onClick={handleLogoClick}
+              onClick={onGoHome}
               className="flex items-center gap-2.5 cursor-pointer group select-none"
-              title="Return to Main Portal"
+              title="Return to Portal Screen"
             >
               <SchoolLogo size="xs" badgeOnly />
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h1 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white leading-tight font-heading">
                     {effectiveTitle}
                   </h1>
                   {effectiveRole && (
                     <span
-                      className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-wider shadow-xs ${
+                      className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-wider ${
                         effectiveRole === 'teacher'
-                          ? 'bg-[#172554] text-white dark:bg-blue-800'
-                          : effectiveRole === 'learner'
-                          ? 'bg-rose-600 text-white dark:bg-rose-700'
-                          : 'bg-emerald-600 text-white dark:bg-emerald-700'
+                          ? 'bg-[#172554] text-white'
+                          : 'bg-emerald-600 text-white'
                       }`}
                     >
                       {effectiveRole}
@@ -159,26 +115,23 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             </div>
           </div>
 
-          {/* Right: Clock, Notifications, Theme Toggle & 3-Dot Menu */}
+          {/* Right: Clock, Notices, Theme Toggle & Menu */}
           <div className="flex items-center gap-2">
-            {/* Synchronized Device Local Time Clock & v2.0.0 Badge */}
+            {/* Live Clock */}
             <div 
               id="device-live-clock-pill"
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs shadow-2xs select-none"
-              title="Synchronized Device Local Time (HH:MM:SS) • Little Roses EduHub v2.0.0"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs select-none"
+              title="Synchronized Device Local Time"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-bold tracking-wider">{timeString || '00:00:00'}</span>
-              <span className="text-[10px] font-sans font-semibold text-slate-400 dark:text-slate-500 border-l border-slate-300 dark:border-slate-600 pl-1.5">
-                v2.0.0
-              </span>
             </div>
 
             {onOpenNotices && (
               <button
                 onClick={onOpenNotices}
                 className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                title="School Notices & Announcements"
+                title="School Notices"
               >
                 <Bell className="w-5 h-5" />
                 {unreadNoticesCount > 0 && (
@@ -189,23 +142,12 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               </button>
             )}
 
-            {/* Direct App Download Button */}
-            <button
-              onClick={() => setIsDownloadOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95"
-              title="Download Little Roses EduHub Directly (APK / PWA)"
-              aria-label="Download App Directly"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Download App</span>
-            </button>
-
-            {/* Theme Toggle Button (Dark to Light at the top where the 3 dots are) */}
+            {/* Theme Toggle Button */}
             <button
               onClick={onToggleDarkMode}
               className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:ring-2 focus:ring-blue-500 active:scale-95"
               title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
-              aria-label="Toggle Theme (Dark / Light)"
+              aria-label="Toggle Theme"
             >
               {isDarkMode ? (
                 <Sun className="w-5 h-5 text-amber-400 hover:rotate-45 transition-transform" />
@@ -214,12 +156,22 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               )}
             </button>
 
+            {/* Exit / Sign Out Button */}
+            {onSignOut && (
+              <button
+                onClick={onSignOut}
+                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                title="Sign Out / Lock"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
+
             {/* 3-Dot Action Button */}
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-blue-500"
+              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Menu & Settings"
-              aria-label="Open School Contacts and Settings"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
@@ -227,21 +179,14 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         </div>
       </header>
 
-      {/* Direct App Download Modal */}
-      <DownloadAppModal
-        isOpen={isDownloadOpen}
-        onClose={() => setIsDownloadOpen(false)}
-      />
-
       {/* 3-Dot Menu Modal */}
       <Menu3DotsModal
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isDarkMode={isDarkMode}
         onToggleDarkMode={onToggleDarkMode}
-        onSwitchPortal={handleRoleSwitch}
-        onSwitchRole={handleRoleSwitch}
-        currentRole={effectiveRole || 'teacher'}
+        onSignOut={onSignOut}
+        currentRole={effectiveRole}
       />
     </>
   );

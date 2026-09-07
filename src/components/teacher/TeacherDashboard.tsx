@@ -31,7 +31,8 @@ import {
   FileSpreadsheet,
   KeyRound,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  Lock
 } from 'lucide-react';
 import { MyClassesView } from './MyClassesView';
 import { SchemesAndLessonsView } from './SchemesAndLessonsView';
@@ -39,6 +40,7 @@ import { AssessmentsManager } from './AssessmentsManager';
 import { AssignmentsManager } from './AssignmentsManager';
 import { QuizBuilder } from './QuizBuilder';
 import { ResourcesManager } from './ResourcesManager';
+import { TeacherResourcesView } from './TeacherResourcesView';
 import { TimetableView } from './TimetableView';
 import { CalendarView } from '../common/CalendarView';
 import { KNECProjectsSyncManager } from './KNECProjectsSyncManager';
@@ -182,14 +184,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0 md:self-center">
+          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold border border-emerald-200 dark:border-emerald-800">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Device Bound</span>
+          </div>
           <button
-            id="switch-teacher-profile-btn"
-            onClick={() => setIsTeacherAuthModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-2xs"
-            title="Switch between Mr. Elvis, Madam Fresiah, Mr. Kelvin, or Madam Liz"
+            id="lock-teacher-device-btn"
+            onClick={onBackToPortals}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-600 dark:text-slate-200 dark:hover:text-rose-400 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-2xs"
+            title="Lock session and return to security portal"
           >
-            <KeyRound className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Switch Teacher</span>
+            <Lock className="w-3.5 h-3.5" />
+            <span>Lock Session</span>
           </button>
         </div>
       </div>
@@ -318,10 +324,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           )}
 
           {activeTab === 'resources' && (
-            <ResourcesManager
-              resources={resources}
-              onOpenUploadModal={() => handleOpenCreate('resource')}
-            />
+            <TeacherResourcesView teacher={activeTeacher} />
           )}
 
           {activeTab === 'timetable' && (

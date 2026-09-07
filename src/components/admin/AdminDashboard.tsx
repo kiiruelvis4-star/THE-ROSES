@@ -50,6 +50,8 @@ import { storage } from '../../services/storageService';
 import { SchoolLogo } from '../SchoolLogo';
 import { SchoolConfigModal } from '../modals/SchoolConfigModal';
 import { ResourcesManager } from '../teacher/ResourcesManager';
+import { AdminResourceManager } from './AdminResourceManager';
+import { TeacherDeviceManager } from './TeacherDeviceManager';
 import { TeacherCRUDModal } from '../modals/TeacherCRUDModal';
 import { BulkAddLearnersModal } from './BulkAddLearnersModal';
 import { deleteLearner, bulkDeleteLearners } from '../../services/sqliteDb';
@@ -544,6 +546,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
+            id="admin-tab-resources"
+            onClick={() => setActiveTab('resources')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'resources'
+                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <FileCheck className="w-4 h-4" />
+            <span>Central Resources (Admin Control)</span>
+          </button>
+
+          <button
+            id="admin-tab-devices"
+            onClick={() => setActiveTab('devices')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'devices'
+                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Teacher Devices & Biometrics</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('staff')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
               activeTab === 'staff'
@@ -589,18 +617,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <BookOpen className="w-4 h-4" />
             <span>CBC Curriculum & KPSEA</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('resources')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'resources'
-                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-            }`}
-          >
-            <FileCheck className="w-4 h-4" />
-            <span>Textbooks & Resources (WRITE)</span>
           </button>
 
           <button
@@ -1469,13 +1485,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* TAB: TEXTBOOKS & RESOURCES (ADMIN WRITE CLEARANCE) */}
+        {/* TAB: CENTRAL TEACHER RESOURCES (ADMIN FULL CONTROL) */}
         {activeTab === 'resources' && (
           <div className="mt-6 animate-fadeIn">
-            <ResourcesManager
-              resources={resources}
-              onOpenUploadModal={() => setIsResourceModalOpen(true)}
-            />
+            <AdminResourceManager />
+          </div>
+        )}
+
+        {/* TAB: TEACHER DEVICES & BIOMETRIC LOCKS */}
+        {activeTab === 'devices' && (
+          <div className="mt-6 animate-fadeIn">
+            <TeacherDeviceManager />
           </div>
         )}
 

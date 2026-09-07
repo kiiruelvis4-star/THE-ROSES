@@ -1,6 +1,6 @@
 {
   "name": "LITTLE ROSES ACADEMY",
-  "description": "LITTLE ROSES ACADEMY CBC EduHub: Teach, Assess, Excel. Comprehensive teacher and learner portal with automated CAT scoring, Global CBE Evaluation Module (Grades 1-6), lesson plans, timetable, document centre, and revision resources.",
+  "description": "LITTLE ROSES ACADEMY EduHub: Teach, Assess, Excel. Comprehensive Admin and Teacher platform with centralized teacher resource management, device binding, biometric authentication, CBC curriculum planning, CAT scoring, timetable, and document centre.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

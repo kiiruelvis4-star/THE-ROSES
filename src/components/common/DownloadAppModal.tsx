@@ -353,7 +353,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
                   </div>
                   <div className="flex items-start gap-2.5">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white font-black text-[10px] shrink-0 mt-0.5">3</span>
-                    <p>Open the downloaded <strong>TheRoses.apk</strong> file and tap <strong>Install</strong>. Done!</p>
+                    <p>Open the downloaded <strong>LittleRosesAcademy.apk</strong> file and tap <strong>Install</strong>. Done!</p>
                   </div>
                 </div>
               </div>
