@@ -88,7 +88,7 @@ export const LearnerNoticesView: React.FC<LearnerNoticesViewProps> = ({
           </span>
           <h3 className="font-black text-base">Little Roses Academy Inquiries</h3>
           <p className="text-xs text-blue-100 max-w-lg">
-            Have questions regarding term schedules, fee clearance, or learner progress? Reach out directly.
+            Have questions regarding term schedules, academic assessments, or learner progress? Reach out directly.
           </p>
         </div>
 

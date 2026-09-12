@@ -16,8 +16,8 @@ import { storage } from '../services/storageService';
 interface TopAppBarProps {
   title?: string;
   subtitle?: string;
-  currentRole?: 'teacher' | 'admin' | null;
-  activeRole?: 'teacher' | 'admin' | null;
+  currentRole?: 'teacher' | 'admin' | 'learner' | 'parent' | null;
+  activeRole?: 'teacher' | 'admin' | 'learner' | 'parent' | null;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
   onGoHome?: () => void;
@@ -99,10 +99,12 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
                       className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-wider ${
                         effectiveRole === 'teacher'
                           ? 'bg-[#172554] text-white'
-                          : 'bg-emerald-600 text-white'
+                          : effectiveRole === 'admin'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-rose-700 text-white'
                       }`}
                     >
-                      {effectiveRole}
+                      {effectiveRole === 'learner' || effectiveRole === 'parent' ? 'STUDENT/PARENT' : effectiveRole}
                     </span>
                   )}
                 </div>

@@ -18,6 +18,7 @@ import { PortalSelectScreen } from './components/PortalSelectScreen';
 import { TopAppBar } from './components/TopAppBar';
 import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { LearnerDashboard } from './components/learner/LearnerDashboard';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
 import { ExitAppModal } from './components/common/ExitAppModal';
 
@@ -110,11 +111,33 @@ export default function App() {
     setCurrentScreen('portal-select');
   };
 
-  // Handle Portal Selection (Admin or Teacher only)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(() => {
+    const list = storage.getStudents();
+    return list.length > 0 ? list[0].id : null;
+  });
+  const [isTeacherViewingLearner, setIsTeacherViewingLearner] = useState(false);
+
+  // Handle Portal Selection
   const handleSelectPortal = (role: UserRole) => {
     setActiveRole(role);
-    setCurrentScreen(role === 'admin' ? 'admin' : 'teacher');
+    if (role === 'learner' || role === 'parent') {
+      setIsTeacherViewingLearner(false);
+      setCurrentScreen('learner');
+    } else if (role === 'admin') {
+      setCurrentScreen('admin');
+    } else {
+      setCurrentScreen('teacher');
+    }
   };
+
+  const handleSelectStudent = (student: Student) => {
+    setSelectedStudentId(student.id);
+    setActiveRole('learner');
+    setIsTeacherViewingLearner(false);
+    setCurrentScreen('learner');
+  };
+
+  const selectedStudent = students.find(s => s.id === selectedStudentId) || students[0] || null;
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -137,6 +160,7 @@ export default function App() {
               students={students}
               onSelectPortal={handleSelectPortal}
               onSelectRole={handleSelectPortal}
+              onSelectStudent={handleSelectStudent}
             />
           </main>
         </div>
@@ -163,7 +187,11 @@ export default function App() {
               resources={resources}
               timetable={timetable}
               events={events}
-              onOpenLearnerDashboard={() => {}}
+              onOpenLearnerDashboard={(studentId) => {
+                setSelectedStudentId(studentId);
+                setIsTeacherViewingLearner(true);
+                setCurrentScreen('learner');
+              }}
               onBackToPortals={() => setCurrentScreen('portal-select')}
             />
           </main>
@@ -186,6 +214,48 @@ export default function App() {
               setStudents={setStudents}
               schemes={schemes}
               onBackToPortals={() => setCurrentScreen('portal-select')}
+            />
+          </main>
+        </div>
+      )}
+
+      {/* 5. PARENT & LEARNER DASHBOARD */}
+      {currentScreen === 'learner' && selectedStudent && (
+        <div className="min-h-screen flex flex-col">
+          <TopAppBar
+            activeRole="learner"
+            title="LITTLE ROSES ACADEMY"
+            subtitle={`Parent & Learner Portal • ${selectedStudent.name} (${selectedStudent.grade})`}
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
+            onGoHome={() => setCurrentScreen('portal-select')}
+            onSignOut={() => {
+              if (isTeacherViewingLearner) {
+                setCurrentScreen('teacher');
+                setIsTeacherViewingLearner(false);
+              } else {
+                setCurrentScreen('portal-select');
+              }
+            }}
+          />
+          <main className="flex-1">
+            <LearnerDashboard
+              student={selectedStudent}
+              allStudents={students}
+              assignments={assignments}
+              quizzes={quizzes}
+              resources={resources}
+              events={events}
+              onSwitchStudent={(id) => setSelectedStudentId(id)}
+              onBackToPortals={() => {
+                if (isTeacherViewingLearner) {
+                  setCurrentScreen('teacher');
+                  setIsTeacherViewingLearner(false);
+                } else {
+                  setCurrentScreen('portal-select');
+                }
+              }}
+              isTeacherViewing={isTeacherViewingLearner}
             />
           </main>
         </div>

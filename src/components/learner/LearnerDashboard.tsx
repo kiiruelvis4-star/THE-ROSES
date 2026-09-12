@@ -1,30 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Student, 
   Assignment, 
   Quiz, 
   ResourceItem, 
-  CalendarEvent,
-  SubjectName 
+  CalendarEvent 
 } from '../../types';
 import { 
   BookOpen, 
   Award, 
   Target, 
-  FileCheck, 
-  GraduationCap, 
-  HelpCircle, 
-  FileText, 
+  ClipboardList, 
+  BookMarked, 
+  Brain, 
+  Trophy, 
   TrendingUp, 
+  Megaphone,
   Bell, 
-  ChevronRight, 
-  Sparkles, 
+  Camera, 
+  Calendar as CalendarIcon, 
+  Home as HomeIcon, 
+  Mail, 
+  User as UserIcon, 
+  Menu, 
+  X, 
   CheckCircle2, 
-  Calendar,
-  User,
-  ArrowRight,
-  ShieldCheck,
-  RefreshCw,
+  WifiOff, 
+  ShieldCheck, 
+  ChevronLeft,
+  Phone,
+  MapPin,
+  HeartPulse,
+  Sparkles,
+  LogOut,
+  Moon,
+  Sun,
   Printer
 } from 'lucide-react';
 import { calculateStudentOverallPercentage, getCBCRating } from '../../data/initialData';
@@ -37,15 +47,18 @@ import { LearnerQuizZoneView } from './LearnerQuizZoneView';
 import { LearnerResultsView } from './LearnerResultsView';
 import { LearnerProgressAnalyticsView } from './LearnerProgressAnalyticsView';
 import { LearnerNoticesView } from './LearnerNoticesView';
+import { LearnerEditProfileModal } from '../modals/LearnerEditProfileModal';
+import { LearnerPhotoUploadModal } from '../modals/LearnerPhotoUploadModal';
+import { storage } from '../../services/storageService';
 
 interface LearnerDashboardProps {
   student: Student;
-  allStudents: Student[];
+  allStudents?: Student[];
   assignments: Assignment[];
   quizzes: Quiz[];
   resources: ResourceItem[];
   events: CalendarEvent[];
-  onSwitchStudent: (studentId: string) => void;
+  onSwitchStudent?: (studentId: string) => void;
   onBackToPortals: () => void;
   isTeacherViewing?: boolean;
 }
@@ -60,118 +73,158 @@ export type LearnerSubView =
   | 'quizzes' 
   | 'results' 
   | 'progress' 
-  | 'notices';
+  | 'notices'
+  | 'calendar'
+  | 'profile';
 
 export const LearnerDashboard: React.FC<LearnerDashboardProps> = ({
   student,
-  allStudents,
   assignments,
   quizzes,
   resources,
   events,
-  onSwitchStudent,
   onBackToPortals,
   isTeacherViewing = false
 }) => {
   const [activeSubView, setActiveSubView] = useState<LearnerSubView>('overview');
+  const [currentStudent, setCurrentStudent] = useState<Student>(student);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(2);
 
-  const overallPct = calculateStudentOverallPercentage(student);
+  useEffect(() => {
+    setCurrentStudent(student);
+  }, [student]);
+
+  const overallPct = calculateStudentOverallPercentage(currentStudent);
   const overallRating = getCBCRating(overallPct);
 
-  const handleGeneratePDFReport = () => {
-    setActiveSubView('results');
-    setTimeout(() => {
-      window.print();
-    }, 450);
-  };
-
-  // SVG Circular progress math
-  const radius = 42;
+  // SVG Circular progress gauge calculations
+  const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (overallPct / 100) * circumference;
 
-  const ACTION_CARDS = [
+  const firstName = currentStudent.name.split(' ')[0] || 'Learner';
+
+  const handlePhotoUpdated = (newAvatarUrl: string) => {
+    const updated = { ...currentStudent, avatar: newAvatarUrl };
+    setCurrentStudent(updated);
+    storage.updateStudentAvatar(currentStudent.id, newAvatarUrl);
+  };
+
+  // The 9 Grid Actions precisely matching the user's uploaded image
+  const GRID_ITEMS = [
     {
       id: 'subjects' as LearnerSubView,
       title: 'My Subjects',
-      desc: 'Syllabi, 8 core subjects, curriculum designs & teachers',
-      icon: BookOpen,
-      iconBg: 'bg-blue-600 text-white',
-      badge: '8 Subjects'
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">📚</span>
+        </div>
+      ),
+      iconFallback: <BookOpen className="w-6 h-6 text-blue-600" />,
+      tag: '8 Subjects'
     },
     {
       id: 'cats' as LearnerSubView,
-      title: 'CATs & Assessments',
-      desc: 'Continuous assessment test scores, CAT 1, CAT 2 & End Term',
-      icon: Award,
-      iconBg: 'bg-amber-500 text-white',
-      badge: `${overallPct}% Mean`
+      title: 'CATs',
+      icon: (
+        <div className="flex items-end gap-1 h-7 px-1 py-0.5">
+          <div className="w-2 h-4 rounded-sm bg-blue-500" />
+          <div className="w-2 h-6 rounded-sm bg-amber-500" />
+          <div className="w-2 h-5 rounded-sm bg-rose-500" />
+        </div>
+      ),
+      iconFallback: <Award className="w-6 h-6 text-amber-500" />,
+      tag: `${overallPct}% Mean`
     },
     {
       id: 'strands' as LearnerSubView,
       title: 'Strand Assessment',
-      desc: 'Core 7 CBC competencies & formative learning rubrics',
-      icon: Target,
-      iconBg: 'bg-rose-600 text-white',
-      badge: '7 Pillars'
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">🎯</span>
+        </div>
+      ),
+      iconFallback: <Target className="w-6 h-6 text-rose-600" />,
+      tag: '7 Pillars'
     },
     {
       id: 'assignments' as LearnerSubView,
       title: 'Assignments',
-      desc: 'Take-home homework, project instructions & submissions',
-      icon: FileCheck,
-      iconBg: 'bg-emerald-600 text-white',
-      badge: '3 Active'
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">📋</span>
+        </div>
+      ),
+      iconFallback: <ClipboardList className="w-6 h-6 text-blue-600" />,
+      tag: '3 Active'
     },
     {
       id: 'revision' as LearnerSubView,
       title: 'Revision Books',
-      desc: 'CBC textbooks, digital notes, past papers & study guides',
-      icon: GraduationCap,
-      iconBg: 'bg-indigo-600 text-white',
-      badge: 'E-Library'
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">📖</span>
+        </div>
+      ),
+      iconFallback: <BookMarked className="w-6 h-6 text-emerald-600" />,
+      tag: 'Library'
     },
     {
       id: 'quizzes' as LearnerSubView,
       title: 'Quiz Zone',
-      desc: 'Interactive timed quizzes, gamified tests & instant points',
-      icon: HelpCircle,
-      iconBg: 'bg-pink-600 text-white',
-      badge: 'Play & Learn'
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">🧠</span>
+        </div>
+      ),
+      iconFallback: <Brain className="w-6 h-6 text-pink-600" />,
+      tag: 'Play & Learn'
     },
     {
       id: 'results' as LearnerSubView,
-      title: 'My Results & Report Card',
-      desc: 'Official printable CBC progress report with teacher remarks',
-      icon: FileText,
-      iconBg: 'bg-purple-600 text-white',
-      badge: 'Official Stamp'
+      title: 'My Results',
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">🏆</span>
+        </div>
+      ),
+      iconFallback: <Trophy className="w-6 h-6 text-amber-500" />,
+      tag: 'Report Card'
     },
     {
       id: 'progress' as LearnerSubView,
-      title: 'Growth & Progress',
-      desc: 'Performance charts, subject rankings & growth trajectories',
-      icon: TrendingUp,
-      iconBg: 'bg-teal-600 text-white',
-      badge: 'Analytics'
+      title: 'Progress',
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">📈</span>
+        </div>
+      ),
+      iconFallback: <TrendingUp className="w-6 h-6 text-blue-600" />,
+      tag: 'Growth'
     },
     {
       id: 'notices' as LearnerSubView,
-      title: 'School Notices',
-      desc: 'Announcements, term dates & Headteacher communications',
-      icon: Bell,
-      iconBg: 'bg-orange-500 text-white',
-      badge: 'Circulars'
+      title: 'Notices',
+      icon: (
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <span className="text-2xl select-none">📢</span>
+        </div>
+      ),
+      iconFallback: <Megaphone className="w-6 h-6 text-orange-500" />,
+      tag: 'School Circulars'
     }
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Teacher viewing learner notice banner if opened from Teacher portal */}
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between transition-colors">
+      {/* Teacher inspection banner if opened from Teacher portal */}
       {isTeacherViewing && (
-        <div className="mb-6 p-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-between shadow-xs">
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-xs z-30">
           <span>
-            ★ Teacher Inspection Mode: You are viewing individual learner portfolio for <strong>{student.name} ({student.grade})</strong>.
+            ★ Teacher Inspection Mode: Individual portfolio for <strong>{currentStudent.name} ({currentStudent.grade})</strong>
           </span>
           <button
             onClick={onBackToPortals}
@@ -183,233 +236,612 @@ export const LearnerDashboard: React.FC<LearnerDashboardProps> = ({
       )}
 
       {/* SUB-VIEW ROUTING */}
-      {activeSubView === 'subjects' && (
-        <LearnerSubjectsView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+      {activeSubView !== 'overview' ? (
+        <div className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-6 py-4 pb-28">
+          {/* Back to Dashboard bar */}
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={() => setActiveSubView('overview')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-black shadow-xs hover:border-blue-500 transition-all active:scale-95"
+            >
+              <ChevronLeft className="w-4 h-4 text-rose-600" />
+              <span>Learner Dashboard</span>
+            </button>
 
-      {activeSubView === 'cats' && (
-        <LearnerCATsView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+              {currentStudent.name} • {currentStudent.grade}
+            </span>
+          </div>
 
-      {activeSubView === 'strands' && (
-        <LearnerStrandsView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'subjects' && (
+            <LearnerSubjectsView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'assignments' && (
-        <LearnerAssignmentsView student={student} assignments={assignments} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'cats' && (
+            <LearnerCATsView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'revision' && (
-        <LearnerRevisionBooksView student={student} resources={resources} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'strands' && (
+            <LearnerStrandsView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'quizzes' && (
-        <LearnerQuizZoneView student={student} quizzes={quizzes} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'assignments' && (
+            <LearnerAssignmentsView student={currentStudent} assignments={assignments} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'results' && (
-        <LearnerResultsView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'revision' && (
+            <LearnerRevisionBooksView student={currentStudent} resources={resources} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'progress' && (
-        <LearnerProgressAnalyticsView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'quizzes' && (
+            <LearnerQuizZoneView student={currentStudent} quizzes={quizzes} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {activeSubView === 'notices' && (
-        <LearnerNoticesView student={student} onBack={() => setActiveSubView('overview')} />
-      )}
+          {activeSubView === 'results' && (
+            <LearnerResultsView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
 
-      {/* OVERVIEW (MAIN LEARNER HUB) */}
-      {activeSubView === 'overview' && (
-        <div className="space-y-6 animate-fadeIn pb-16">
-          {/* PERSONALIZED HEADER WITH DYNAMIC PROGRESS RING */}
-          <div className="p-6 sm:p-8 bg-gradient-to-br from-rose-900 via-rose-800 to-rose-950 text-white rounded-3xl shadow-xl relative overflow-hidden">
-            {/* Decorative background circle */}
-            <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+          {activeSubView === 'progress' && (
+            <LearnerProgressAnalyticsView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
 
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-              {/* Left Profile Info */}
-              <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-                {/* Avatar with status ring */}
-                <div className="relative">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-amber-400 to-rose-300 shadow-lg">
-                    <img
-                      src={student.avatar}
-                      alt={student.name}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full rounded-full object-cover bg-white/10"
-                    />
+          {activeSubView === 'notices' && (
+            <LearnerNoticesView student={currentStudent} onBack={() => setActiveSubView('overview')} />
+          )}
+
+          {/* CALENDAR SUB-VIEW */}
+          {activeSubView === 'calendar' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center">
+                    <CalendarIcon className="w-5 h-5" />
                   </div>
-                  <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-rose-900 flex items-center justify-center text-[10px] text-white">
-                    ✓
-                  </span>
+                  <div>
+                    <h2 className="text-base font-black font-heading">Term 1, 2026 Academic Calendar</h2>
+                    <p className="text-xs text-slate-500">Scheduled school events, assessments & activities</p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-rose-100 text-xs font-bold">
-                    <span>{student.grade} • Term 1, 2026</span>
-                  </div>
-
-                  <h1 className="text-2xl sm:text-3xl font-black font-heading tracking-tight">
-                    {student.name}
-                  </h1>
-
-                  <p className="text-xs text-rose-200 font-mono">
-                    Adm: {student.admissionNumber} • Little Roses Academy
-                  </p>
-
-                  <p className="text-[11px] font-serif italic text-rose-300">
-                    "Much from Little"
-                  </p>
+                <div className="space-y-2.5">
+                  {events.length > 0 ? (
+                    events.map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between"
+                      >
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            {evt.date}
+                          </span>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">
+                            {evt.title}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {evt.description || 'Academic milestone & school session'}
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-xl">
+                          {evt.category || 'Official'}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-xs text-slate-500">
+                      No calendar events scheduled for this period.
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Right: Dynamic Overall Progress Ring Indicator */}
-              <div className="flex items-center gap-5 bg-white/10 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/20 shadow-inner">
-                {/* SVG Circular Progress Ring */}
-                <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    {/* Background Circle */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      className="stroke-white/20"
-                      strokeWidth="10"
-                      fill="transparent"
-                    />
-                    {/* Progress Arc */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      className="stroke-emerald-400 transition-all duration-1000 ease-out"
-                      strokeWidth="10"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      strokeLinecap="round"
-                      fill="transparent"
-                    />
-                  </svg>
-                  {/* Center Text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-black text-white leading-none">
-                      {overallPct}%
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-rose-200 mt-0.5">
-                      Overall
-                    </span>
+          {/* PROFILE SUB-VIEW (WITH EDITABLE PICTURE & DETAILS WITHOUT FEES OR DIET) */}
+          {activeSubView === 'profile' && (
+            <div className="space-y-5 animate-fadeIn">
+              <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                {/* Photo & Identity Banner */}
+                <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                  <div className="relative group">
+                    <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-rose-500 to-amber-400 shadow-xl overflow-hidden">
+                      <img
+                        src={currentStudent.avatar || 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?w=200'}
+                        alt={currentStudent.name}
+                        className="w-full h-full object-cover rounded-full bg-slate-200 dark:bg-slate-800"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsPhotoUploadOpen(true)}
+                      className="absolute bottom-0 right-0 p-2 bg-rose-700 hover:bg-rose-800 text-white rounded-full shadow-lg transition-transform active:scale-90"
+                      title="Change Picture"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1 flex-1">
+                    <h2 className="text-xl font-black font-heading text-slate-900 dark:text-white">
+                      {currentStudent.name}
+                    </h2>
+                    <p className="text-xs font-mono text-slate-500">
+                      Admission Number: <strong className="text-slate-800 dark:text-slate-200">{currentStudent.admissionNumber}</strong>
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 font-bold">
+                      {currentStudent.grade} • Little Roses Academy Nakuru
+                    </p>
+                    <p className="text-[11px] text-slate-400 italic">
+                      "Much from Little"
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsPhotoUploadOpen(true)}
+                      className="px-3.5 py-2 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs font-bold hover:bg-rose-100 flex items-center gap-1.5 transition-all"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Edit Picture</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditProfileOpen(true)}
+                      className="px-3.5 py-2 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all"
+                    >
+                      <span>Edit Details</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Progress Details */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-200 block">
-                    CBC Assessment Rating
-                  </span>
-                  <div className="inline-block px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-xs shadow-xs">
-                    {overallRating.label}
+                {/* Profile Grid: Contacts, Residence, Health, Talents (NO FEES, NO DIET) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Parent / Guardian
+                    </span>
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      {currentStudent.parentName || 'Parent / Guardian'}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-400 flex items-center gap-1 font-mono">
+                      <Phone className="w-3 h-3 text-emerald-600" />
+                      {currentStudent.parentPhone || '0700 000000'}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-rose-100 font-medium">
-                    Calculated from 8 CBC Learning Areas
+
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Residence & Emergency
+                    </span>
+                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-rose-600" />
+                      {currentStudent.homeAddress || 'Nakuru, Kenya'}
+                    </p>
+                    <p className="text-slate-500 font-mono">
+                      Emergency: {currentStudent.emergencyContact || currentStudent.parentPhone || 'School Office'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Attendance & Conduct
+                    </span>
+                    <p className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Attendance: {currentStudent.attendanceRate || 98}% (Exemplary)
+                    </p>
+                    <p className="text-slate-500">
+                      Discipline Standing: Active, Positive & Respectful
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Health & Medical Notes
+                    </span>
+                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                      <HeartPulse className="w-3 h-3 text-rose-500" />
+                      {currentStudent.medicalNotes ? currentStudent.medicalNotes : 'General Health: Fit & Healthy'}
+                    </p>
+                    <p className="text-slate-500">
+                      Physical Health & Wellness Verified
+                    </p>
+                  </div>
+                </div>
+
+                {/* Privacy Safeguard Notice */}
+                <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-blue-700 dark:text-blue-400 shrink-0" />
+                  <p className="text-xs text-blue-900 dark:text-blue-200 font-medium">
+                    Strict Privacy Shield: Only authorized parents with Admission Number <strong>{currentStudent.admissionNumber}</strong> have access to this learner's files.
                   </p>
                 </div>
               </div>
             </div>
+          )}
+        </div>
+      ) : (
+        /* MAIN OVERVIEW DASHBOARD - EXACT VISUAL MATCH TO USER SCREENSHOT */
+        <div className="flex-1 flex flex-col w-full max-w-md sm:max-w-lg mx-auto bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative pb-28">
+          {/* 1. TOP HEADER - DEEP NAVY GRADIENT */}
+          <div className="bg-gradient-to-b from-[#101a30] via-[#142346] to-[#182952] text-white pt-4 pb-14 px-5 relative rounded-b-[2.5rem] shadow-xl">
+            {/* Top Navigation Row: Hamburger Menu & Notification Bell with Badge */}
+            <div className="flex items-center justify-between mb-5">
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white transition-all"
+                title="Open Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
 
-            {/* Quick Switch Learner Dropdown & Printable PDF Trigger */}
-            <div className="mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="text-rose-200 font-medium">Switch Learner:</span>
-                <select
-                  value={student.id}
-                  onChange={(e) => onSwitchStudent(e.target.value)}
-                  className="px-3 py-1 bg-black/30 border border-white/20 rounded-xl text-xs font-bold text-white focus:outline-none"
-                >
-                  {allStudents.map((s) => (
-                    <option key={s.id} value={s.id} className="text-slate-900">
-                      {s.name} ({s.grade} - {s.admissionNumber})
-                    </option>
-                  ))}
-                </select>
-
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={handleGeneratePDFReport}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-rose-950 hover:bg-rose-50 font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
-                  title="Generate official printable CBC PDF report card with CAT scores"
+                  type="button"
+                  onClick={() => setActiveSubView('notices')}
+                  className="relative w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white transition-all"
+                  title="Notices"
                 >
-                  <Printer className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Printable PDF Report Card</span>
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full text-[11px] font-black flex items-center justify-center border-2 border-[#142346]">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Row: Circular Photo with Edit Camera + Hello, Name & Grade */}
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <div 
+                  onClick={() => setIsPhotoUploadOpen(true)}
+                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-white/90 p-0.5 overflow-hidden shadow-xl cursor-pointer bg-white/10 hover:opacity-90 transition-opacity"
+                  title="Click to change profile picture"
+                >
+                  <img
+                    src={currentStudent.avatar || 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?w=200'}
+                    alt={currentStudent.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoUploadOpen(true)}
+                  className="absolute bottom-0 right-0 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md transition-transform active:scale-90"
+                  title="Upload picture"
+                >
+                  <Camera className="w-3 h-3" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 text-rose-200 text-[11px]">
-                <span>Punctuality: <strong>100%</strong></span>
-                <span>•</span>
-                <span>House: <strong>Rose Red</strong></span>
+              <div className="space-y-0.5">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-1.5 font-heading">
+                  <span>Hello, {firstName}</span>
+                  <span className="inline-block animate-bounce select-none text-xl">👋</span>
+                </h1>
+                <p className="text-xs sm:text-sm font-semibold text-slate-200">
+                  {currentStudent.grade}
+                </p>
+                <p className="text-[11px] text-slate-300 font-medium">
+                  Term 1, 2026
+                </p>
               </div>
             </div>
           </div>
 
-          {/* ACTION GRID (9 CARDS) */}
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white font-heading">
-                  Learner Portal Quick Access
+          {/* 2. FLOATING OVERALL PROGRESS CARD (Overlaps header by -mt-8) */}
+          <div className="px-5 -mt-8 relative z-10">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-xl shadow-slate-900/10 border border-slate-100 dark:border-slate-800 flex items-center justify-between transition-all">
+              <div className="space-y-1">
+                <h2 className="text-base sm:text-lg font-black font-heading text-slate-900 dark:text-white">
+                  Overall Progress
                 </h2>
-                <span className="text-xs text-slate-500 font-medium">
-                  Select an area to explore learning materials, CAT scores, and report cards
-                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {overallPct >= 75 ? 'Good job! Keep it up' : 'Continuous progress in learning areas'}
+                </p>
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                  <span>★ {overallRating.label}</span>
+                  <span className="text-slate-400">• 8 Subjects</span>
+                </div>
               </div>
-              <button
-                onClick={handleGeneratePDFReport}
-                className="inline-flex items-center self-start sm:self-auto gap-2 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Generate PDF Report Card</span>
-              </button>
+
+              {/* Progress Ring with 78% Centered */}
+              <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 60 60">
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r={radius}
+                    className="stroke-slate-100 dark:stroke-slate-800"
+                    strokeWidth="5"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r={radius}
+                    className="stroke-emerald-500 transition-all duration-1000 ease-out"
+                    strokeWidth="5"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                    {overallPct}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. 9-ACTION GRID (3 Columns x 3 Rows) */}
+          <div className="p-5">
+            <div className="grid grid-cols-3 gap-3">
+              {GRID_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveSubView(item.id)}
+                  className="p-3.5 sm:p-4 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-100 dark:border-slate-800/90 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all flex flex-col items-center justify-center text-center group active:scale-95"
+                >
+                  <div className="w-11 h-11 rounded-2xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform mb-2">
+                    {item.icon}
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-black font-heading text-slate-800 dark:text-slate-100 leading-tight">
+                    {item.title}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {ACTION_CARDS.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => setActiveSubView(card.id)}
-                    className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-rose-400 dark:hover:border-rose-600 transition-all cursor-pointer group flex flex-col justify-between space-y-4"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-rose-50 dark:group-hover:bg-rose-950 group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors">
-                          {card.badge}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="font-extrabold text-base text-slate-900 dark:text-white group-hover:text-rose-700 dark:group-hover:text-rose-400 transition-colors">
-                          {card.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                          {card.desc}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
-                      <span>Open {card.title}</span>
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Feature trust bar from bottom of screenshot */}
+            <div className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>Works 100% Offline</span>
+                </span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                  CBC (Grade 1-6)
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                <div className="flex items-center gap-1 truncate">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>Timetable & Lessons</span>
+                </div>
+                <div className="flex items-center gap-1 truncate">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>Revision & Exam Series</span>
+                </div>
+                <div className="flex items-center gap-1 truncate">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>Continuous Assessments</span>
+                </div>
+                <div className="flex items-center gap-1 truncate">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>Safe & Private</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* 4. BOTTOM NAVIGATION BAR - DARK NAVY, PINNED FIXED TO BOTTOM */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#121c38] text-white border-t border-slate-800/60 shadow-2xl backdrop-blur-md">
+        <div className="max-w-md sm:max-w-lg mx-auto flex items-center justify-around py-2.5 px-3">
+          <button
+            type="button"
+            onClick={() => setActiveSubView('overview')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all ${
+              activeSubView === 'overview'
+                ? 'text-white font-black'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className={`p-1 rounded-xl ${activeSubView === 'overview' ? 'bg-white/15' : ''}`}>
+              <HomeIcon className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] tracking-wide">Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubView('calendar')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all ${
+              activeSubView === 'calendar'
+                ? 'text-white font-black'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className={`p-1 rounded-xl ${activeSubView === 'calendar' ? 'bg-white/15' : ''}`}>
+              <CalendarIcon className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] tracking-wide">Calendar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubView('notices')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all ${
+              activeSubView === 'notices'
+                ? 'text-white font-black'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className={`p-1 rounded-xl ${activeSubView === 'notices' ? 'bg-white/15' : ''}`}>
+              <Mail className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] tracking-wide">Messages</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubView('profile')}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all ${
+              activeSubView === 'profile'
+                ? 'text-white font-black'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className={`p-1 rounded-xl ${activeSubView === 'profile' ? 'bg-white/15' : ''}`}>
+              <UserIcon className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] tracking-wide">Profile</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Slide-out Menu Drawer from Hamburger Menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 flex animate-fadeIn">
+          <div 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="relative w-72 max-w-[85vw] bg-white dark:bg-slate-900 h-full p-5 shadow-2xl flex flex-col justify-between z-10 animate-slideRight">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-900 text-white font-black flex items-center justify-center text-xs">
+                    LRA
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black font-heading text-slate-900 dark:text-white">
+                      LITTLE ROSES ACADEMY
+                    </h3>
+                    <p className="text-[10px] text-slate-500">Learner & Parent Hub</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Student info */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+                <img
+                  src={currentStudent.avatar || 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?w=100'}
+                  alt={currentStudent.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div className="overflow-hidden">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {currentStudent.name}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    {currentStudent.admissionNumber} • {currentStudent.grade}
+                  </p>
+                </div>
+              </div>
+
+              {/* Navigation links */}
+              <div className="space-y-1 text-xs">
+                <button
+                  onClick={() => {
+                    setActiveSubView('overview');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 font-bold text-slate-700 dark:text-slate-200 text-left"
+                >
+                  <HomeIcon className="w-4 h-4 text-blue-600" />
+                  <span>Home Dashboard</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsPhotoUploadOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 font-bold text-slate-700 dark:text-slate-200 text-left"
+                >
+                  <Camera className="w-4 h-4 text-rose-600" />
+                  <span>Update Learner Picture</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveSubView('results');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 font-bold text-slate-700 dark:text-slate-200 text-left"
+                >
+                  <Printer className="w-4 h-4 text-purple-600" />
+                  <span>Print CBC Report Card</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveSubView('calendar');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 font-bold text-slate-700 dark:text-slate-200 text-left"
+                >
+                  <CalendarIcon className="w-4 h-4 text-emerald-600" />
+                  <span>School Calendar</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveSubView('profile');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 font-bold text-slate-700 dark:text-slate-200 text-left"
+                >
+                  <UserIcon className="w-4 h-4 text-amber-600" />
+                  <span>Learner Profile</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                <WifiOff className="w-3.5 h-3.5" />
+                <span>100% Offline Mode</span>
+              </div>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onBackToPortals();
+                }}
+                className="w-full p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold text-xs flex items-center justify-center gap-2 hover:bg-rose-100 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Exit Portal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PHOTO UPLOAD MODAL */}
+      {isPhotoUploadOpen && (
+        <LearnerPhotoUploadModal
+          isOpen={isPhotoUploadOpen}
+          onClose={() => setIsPhotoUploadOpen(false)}
+          student={currentStudent}
+          onPhotoUpdated={handlePhotoUpdated}
+        />
+      )}
+
+      {/* FULL PROFILE DETAILS MODAL (WITHOUT FEES OR DIET) */}
+      {isEditProfileOpen && (
+        <LearnerEditProfileModal
+          isOpen={isEditProfileOpen}
+          onClose={() => setIsEditProfileOpen(false)}
+          student={currentStudent}
+          onSuccess={(updated) => {
+            setCurrentStudent(updated);
+          }}
+          isParentRole={!isTeacherViewing}
+        />
       )}
     </div>
   );

@@ -9,25 +9,31 @@ import {
   Lock,
   Smartphone,
   Fingerprint,
-  BookOpen
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
 import { Student, TeacherProfile, DeviceActivationInfo } from '../types';
 import { storage } from '../services/storageService';
 import { TeacherAuthModal } from './teacher/TeacherAuthModal';
 import { AdminAuthModal } from './admin/AdminAuthModal';
+import { ParentAuthModal } from './parent/ParentAuthModal';
 
 interface PortalSelectScreenProps {
-  onSelectRole?: (role: 'teacher' | 'admin') => void;
-  onSelectPortal?: (role: 'teacher' | 'admin') => void;
+  onSelectRole?: (role: 'teacher' | 'admin' | 'learner') => void;
+  onSelectPortal?: (role: 'teacher' | 'admin' | 'learner') => void;
+  onSelectStudent?: (student: Student) => void;
   students?: Student[];
 }
 
 export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
   onSelectRole,
-  onSelectPortal
+  onSelectPortal,
+  onSelectStudent,
+  students = []
 }) => {
   const [isTeacherAuthOpen, setIsTeacherAuthOpen] = useState<boolean>(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState<boolean>(false);
+  const [isParentAuthOpen, setIsParentAuthOpen] = useState<boolean>(false);
   const [deviceActivation, setDeviceActivation] = useState<DeviceActivationInfo | null>(() => storage.getDeviceActivation());
   
   const sysConfig = storage.getSystemConfig();
@@ -40,13 +46,25 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
     return () => unsub();
   }, []);
 
-  const handleRoleSelection = (role: 'teacher' | 'admin') => {
+  const handleRoleSelection = (role: 'teacher' | 'admin' | 'learner') => {
     if (typeof onSelectPortal === 'function') {
       onSelectPortal(role);
     }
     if (typeof onSelectRole === 'function') {
       onSelectRole(role);
     }
+  };
+
+  const handleParentClick = () => {
+    setIsParentAuthOpen(true);
+  };
+
+  const handleParentAuthSuccess = (student: Student) => {
+    setIsParentAuthOpen(false);
+    if (typeof onSelectStudent === 'function') {
+      onSelectStudent(student);
+    }
+    handleRoleSelection('learner');
   };
 
   const handleTeacherClick = () => {
@@ -104,13 +122,43 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
           <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
         </div>
 
-        {/* Portals Selection Card Container - 2 ROLES: TEACHER & ADMIN */}
+        {/* Portals Selection Card Container - 3 ROLES: PARENT/LEARNER, TEACHER, ADMIN */}
         <div className="w-full space-y-3.5">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Select Portal Access
           </p>
 
-          {/* 1. TEACHER PORTAL BUTTON (Navy Blue) */}
+          {/* 1. PARENT & LEARNER PORTAL BUTTON (Rose Red) */}
+          <button
+            id="portal-select-parent-learner-btn"
+            onClick={handleParentClick}
+            className="w-full group relative overflow-hidden flex items-center justify-between p-4 sm:p-5 bg-[#881337] hover:bg-[#9f1239] text-white rounded-2xl shadow-lg shadow-rose-950/20 border-2 border-rose-700/80 transition-all transform active:scale-[0.98] text-left"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-700/80 border border-rose-400/40 flex items-center justify-center text-white shadow-inner group-hover:scale-105 transition-transform shrink-0">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-black tracking-wide font-heading">LEARNER & PARENT</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-rose-100 border border-white/20">
+                    STUDENT HUB
+                  </span>
+                </div>
+                <p className="text-xs text-rose-100/90 mt-0.5">
+                  CATs, Performance Results, Quizzes & Revision
+                </p>
+                <p className="text-[10px] text-rose-200/80 mt-1 font-medium">
+                  Log in with Learner Admission Number (e.g. LRA-2021-084)
+                </p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform shrink-0">
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </button>
+
+          {/* 2. TEACHER PORTAL BUTTON (Navy Blue) */}
           <button
             id="portal-select-teacher-btn"
             onClick={handleTeacherClick}
@@ -142,7 +190,7 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
             </div>
           </button>
 
-          {/* 2. ADMINISTRATION PORTAL BUTTON (Emerald Green) */}
+          {/* 3. ADMINISTRATION PORTAL BUTTON (Emerald Green) */}
           <button
             id="portal-select-admin-btn"
             onClick={handleAdminClick}
@@ -183,6 +231,16 @@ export const PortalSelectScreen: React.FC<PortalSelectScreenProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Parent & Learner Authentication Modal */}
+      {isParentAuthOpen && (
+        <ParentAuthModal
+          isOpen={isParentAuthOpen}
+          onClose={() => setIsParentAuthOpen(false)}
+          students={students}
+          onSelectStudent={handleParentAuthSuccess}
+        />
+      )}
 
       {/* Teacher Authentication & Device Activation Modal */}
       {isTeacherAuthOpen && (

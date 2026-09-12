@@ -23,7 +23,8 @@ import {
   TeacherProfile,
   BellPeriodSlot,
   UnifiedResource,
-  DeviceActivationInfo
+  DeviceActivationInfo,
+  TeacherDocumentItem
 } from '../types';
 import { 
   INITIAL_STUDENTS, 
@@ -39,7 +40,7 @@ import {
   INITIAL_STAFF
 } from '../data/initialData';
 import { INITIAL_UNIFIED_RESOURCES } from '../data/initialUnifiedResources';
-import { verifyAdminHash, verifyTeacherHash } from './security';
+import { verifyAdminHash, verifyTeacherHash, verifyLearnerPassword } from './security';
 import {
   TEACHER_PROFILES,
   BELL_SCHEDULE_SLOTS,
@@ -95,7 +96,8 @@ const STORAGE_KEYS = {
   UNIFIED_RESOURCES: 'lra_unified_resources_v2',
   DEVICE_ACTIVATION: 'lra_device_activation_v2',
   DEVICE_ID: 'lra_device_unique_id_v2',
-  ALL_DEVICE_LOCKS: 'lra_all_device_locks_v2'
+  ALL_DEVICE_LOCKS: 'lra_all_device_locks_v2',
+  TEACHER_DOCS: 'lra_teacher_docs_v1'
 };
 
 export interface CurriculumSettings {
@@ -206,6 +208,16 @@ class StorageService {
     return this.getStudents().find(s => s.id === id);
   }
 
+  public getStudentByAdmission(adm: string): Student | undefined {
+    const clean = adm.trim().toUpperCase();
+    const cleanNum = clean.replace(/[^A-Z0-9]/g, '');
+    return this.getStudents().find(s => {
+      const sAdm = s.admissionNumber.toUpperCase().trim();
+      const sAdmNum = sAdm.replace(/[^A-Z0-9]/g, '');
+      return sAdm === clean || s.id.toUpperCase().trim() === clean || sAdmNum === cleanNum;
+    });
+  }
+
   public getStudentsByGrade(grade: GradeLevel): Student[] {
     return this.getStudents().filter(s => s.grade === grade);
   }
@@ -219,6 +231,31 @@ class StorageService {
       list.unshift(student);
     }
     this.setItem(STORAGE_KEYS.STUDENTS, list);
+  }
+
+  public updateStudentAvatar(studentId: string, avatarDataUrl: string): void {
+    const list = this.getStudents();
+    const student = list.find(s => s.id === studentId);
+    if (student) {
+      student.avatar = avatarDataUrl;
+      this.setItem(STORAGE_KEYS.STUDENTS, list);
+    }
+  }
+
+  public getActiveLearnerId(): string | null {
+    try {
+      return localStorage.getItem('little_roses_current_learner_id');
+    } catch {
+      return null;
+    }
+  }
+
+  public setActiveLearnerId(studentId: string): void {
+    try {
+      localStorage.setItem('little_roses_current_learner_id', studentId);
+    } catch {
+      // ignore in incognito / restricted environments
+    }
   }
 
   public updateStudentCAT(
@@ -419,6 +456,60 @@ class StorageService {
   public deleteRawScheme(id: string): void {
     const list = this.getRawSavedSchemes().filter(item => item.id !== id);
     this.setItem(STORAGE_KEYS.RAW_SAVED_SCHEMES, list);
+    this.notify();
+  }
+
+  // Teacher Documents Repository (Uploads & Raw data attachments)
+  public getTeacherDocuments(): TeacherDocumentItem[] {
+    return this.getItem<TeacherDocumentItem[]>(STORAGE_KEYS.TEACHER_DOCS, [
+      {
+        id: 'tdoc-sample-1',
+        title: 'Grade 6 Mathematics KICD Rationalized Curriculum Guide',
+        category: 'scheme',
+        grade: 'Grade 6',
+        subject: 'Mathematics',
+        term: 'Term 1',
+        week: 1,
+        fileName: 'Grade6_Math_Curriculum_Guide.pdf',
+        fileSize: '1.8 MB',
+        fileType: 'application/pdf',
+        uploadedAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        teacherName: 'Teacher Elvis',
+        description: 'Comprehensive curriculum guide covering rationalized numbers, geometry, and measurements.'
+      },
+      {
+        id: 'tdoc-sample-2',
+        title: 'Grade 6 Science CAT 1 Revision & Marking Guide',
+        category: 'cat',
+        grade: 'Grade 6',
+        subject: 'Science and Technology',
+        term: 'Term 1',
+        week: 4,
+        fileName: 'Grade6_Science_CAT1_Marking_Scheme.docx',
+        fileSize: '850 KB',
+        fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        uploadedAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        teacherName: 'Teacher Elvis',
+        description: 'CAT 1 assessment question paper and model rubric for 30 marks.'
+      }
+    ]);
+  }
+
+  public saveTeacherDocument(doc: TeacherDocumentItem): void {
+    const list = this.getTeacherDocuments();
+    const idx = list.findIndex(d => d.id === doc.id);
+    if (idx >= 0) {
+      list[idx] = doc;
+    } else {
+      list.unshift(doc);
+    }
+    this.setItem(STORAGE_KEYS.TEACHER_DOCS, list);
+    this.notify();
+  }
+
+  public deleteTeacherDocument(id: string): void {
+    const list = this.getTeacherDocuments().filter(d => d.id !== id);
+    this.setItem(STORAGE_KEYS.TEACHER_DOCS, list);
     this.notify();
   }
 
@@ -691,6 +782,13 @@ class StorageService {
 
   public verifyAdminPassword(password?: string): boolean {
     return verifyAdminHash(password);
+  }
+
+  public verifyLearnerPassword(admissionNumber?: string, password?: string): boolean {
+    if (!admissionNumber || !password) return false;
+    const student = this.getStudentByAdmission(admissionNumber);
+    if (!student) return false;
+    return verifyLearnerPassword(password, student.admissionNumber, student.password);
   }
 
   public isTeacherAuthenticated(): boolean {

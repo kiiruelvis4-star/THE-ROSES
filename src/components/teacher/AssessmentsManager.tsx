@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   GradeLevel, 
   SubjectName, 
-  Student, 
-  STANDARD_SUBJECTS 
+  Student 
 } from '../../types';
 import { 
   Award, 
@@ -21,6 +20,7 @@ import {
 import { storage } from '../../services/storageService';
 import { calculateStudentOverallPercentage, getCBCRating, CBC_SUBJECT_COLORS } from '../../data/initialData';
 import { GlobalCBEEvaluationManager } from '../common/GlobalCBEEvaluationManager';
+import { getSubjectsForGrade, getSubjectScore } from '../../services/subjectOrder';
 
 interface AssessmentsManagerProps {
   students: Student[];
@@ -34,9 +34,16 @@ export const AssessmentsManager: React.FC<AssessmentsManagerProps> = ({
   onOpenLearnerDashboard
 }) => {
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>('Grade 6');
-  const [selectedSubject, setSelectedSubject] = useState<SubjectName>('Mathematics');
+  const subjects = getSubjectsForGrade(selectedGrade);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectName>(subjects[0]);
   const [assessmentViewMode, setAssessmentViewMode] = useState<'by-subject' | 'by-student-matrix' | 'cbe-root-engine'>('cbe-root-engine');
   const [saveIndicator, setSaveIndicator] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!subjects.includes(selectedSubject)) {
+      setSelectedSubject(subjects[0]);
+    }
+  }, [selectedGrade, subjects, selectedSubject]);
 
   const gradeStudents = students.filter(s => s.grade === selectedGrade);
 
@@ -171,7 +178,7 @@ export const AssessmentsManager: React.FC<AssessmentsManagerProps> = ({
         {/* Subjects bar if in by-subject mode */}
         {assessmentViewMode === 'by-subject' && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {STANDARD_SUBJECTS.map((sub) => {
+            {subjects.map((sub, idx) => {
               const isSel = selectedSubject === sub;
               return (
                 <button
@@ -183,7 +190,7 @@ export const AssessmentsManager: React.FC<AssessmentsManagerProps> = ({
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
                   }`}
                 >
-                  {sub}
+                  #{idx + 1} {sub}
                 </button>
               );
             })}
@@ -329,8 +336,10 @@ export const AssessmentsManager: React.FC<AssessmentsManagerProps> = ({
               <thead>
                 <tr className="bg-slate-100/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 text-[10px] uppercase">
                   <th className="p-3">Learner</th>
-                  {STANDARD_SUBJECTS.map(sub => (
-                    <th key={sub} className="p-2 text-center whitespace-nowrap">{sub.slice(0, 4)}.</th>
+                  {subjects.map((sub, idx) => (
+                    <th key={sub} className="p-2 text-center whitespace-nowrap" title={sub}>
+                      #{idx + 1} {sub.slice(0, 4)}.
+                    </th>
                   ))}
                   <th className="p-3 text-center bg-blue-50 dark:bg-blue-950 font-black">Overall %</th>
                   <th className="p-3 text-center">Rating</th>
@@ -353,8 +362,8 @@ export const AssessmentsManager: React.FC<AssessmentsManagerProps> = ({
                         <div className="text-[10px] text-slate-400 font-mono">{st.admissionNumber}</div>
                       </td>
 
-                      {STANDARD_SUBJECTS.map(sub => {
-                        const m = st.catMarks[sub] || { cat1: 0, cat2: 0, endTerm: 0 };
+                      {subjects.map(sub => {
+                        const m = getSubjectScore(st.catMarks, sub);
                         const sPct = Math.round((m.cat1 / 30) * 20 + (m.cat2 / 30) * 20 + (m.endTerm / 100) * 60);
                         return (
                           <td key={sub} className="p-2 text-center font-semibold text-slate-700 dark:text-slate-300">

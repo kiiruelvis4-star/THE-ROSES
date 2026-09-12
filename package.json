@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
-    "build:apk": "vite build && cd android && chmod +x gradlew && ./gradlew assembleDebug",
+    "build:apk": "vite build && nitron build && cp dist/app.apk LittleRosesAcademy.apk && cp dist/app.apk public/LittleRosesAcademy.apk && cp dist/app.apk LittleRoses.apk && cp dist/app.apk public/LittleRoses.apk",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
@@ -23,7 +23,9 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "vite": "^6.2.3"
+    "tailwindcss": "^4.1.14",
+    "vite": "^6.2.3",
+    "vite-plugin-pwa": "^1.3.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
@@ -33,11 +35,9 @@
     "@types/react-dom": "^19.2.5",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "nitron": "^2.0.2",
     "sharp": "^0.35.4",
-    "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3",
-    "vite-plugin-pwa": "^1.3.0"
+    "typescript": "~5.8.2"
   }
 }

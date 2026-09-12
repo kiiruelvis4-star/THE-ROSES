@@ -33,11 +33,13 @@ import {
   Lock,
   Unlock,
   X,
-  Database
+  Database,
+  UploadCloud
 } from 'lucide-react';
 import { storage } from '../../services/storageService';
 import { updateTimetableSlot, generateSqliteTimetableSQL } from '../../services/sqliteDb';
 import { SchoolLogo } from '../SchoolLogo';
+import { UploadNewTimetableModal } from '../modals/UploadNewTimetableModal';
 import { 
   BELL_SCHEDULE_SLOTS, 
   getCurrentBellStatus, 
@@ -60,6 +62,32 @@ const DAYS: ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday')[] = [
 
 const GRADES: GradeLevel[] = [
   'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'
+];
+
+const LOWER_GRADES: GradeLevel[] = ['Grade 1', 'Grade 2', 'Grade 3'];
+const UPPER_GRADES: GradeLevel[] = ['Grade 4', 'Grade 5', 'Grade 6'];
+
+const LOWER_SUBJECTS: string[] = [
+  'Mathematical Activities',
+  'English Language Activities',
+  'Kiswahili Language Activities',
+  'Environmental Activities',
+  'Creative Activities',
+  'Religious Education',
+  'Movement Activities',
+  'Pastoral Instruction'
+];
+
+const UPPER_SUBJECTS: string[] = [
+  'Mathematics',
+  'English',
+  'Kiswahili',
+  'Science and Technology',
+  'Agriculture and Nutrition',
+  'Social Studies',
+  'Creative Arts & Sports',
+  'Religious Education',
+  'Pastoral Instruction'
 ];
 
 // Quick simulation times for testing & demonstrations
@@ -126,12 +154,19 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     return storage.getMasterTeacherSchedule();
   });
 
+  // Grade Tier: Lower Primary (Grade 1-3) vs Upper Primary (Grade 4-6)
+  const [gradeTier, setGradeTier] = useState<'lower' | 'upper'>('lower');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
   // Editing state
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
   const [editedSubject, setEditedSubject] = useState<string>('Mathematics');
   const [editedGrade, setEditedGrade] = useState<GradeLevel>('Grade 6');
   const [editedTeacher, setEditedTeacher] = useState<string>(selectedTeacher.name);
   const [editedRoom, setEditedRoom] = useState<string>('Room 6A');
+  const [editedTimeSlot, setEditedTimeSlot] = useState<string>('08:10 – 08:50');
+  const [editedStartTime, setEditedStartTime] = useState<string>('08:10');
+  const [editedEndTime, setEditedEndTime] = useState<string>('08:50');
 
   // Real-time clock update (every 10 seconds)
   useEffect(() => {
@@ -178,6 +213,9 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     setEditedGrade(slot.grade);
     setEditedTeacher(slot.teacherName);
     setEditedRoom(slot.room);
+    setEditedTimeSlot(slot.timeSlot || '08:10 – 08:50');
+    setEditedStartTime(slot.startTime || '08:10');
+    setEditedEndTime(slot.endTime || '08:50');
   };
 
   const handleSaveSlot = (slot: TimetableSlot) => {
@@ -192,7 +230,10 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
           subject: editedSubject as any,
           grade: editedGrade,
           teacherName: editedTeacher,
-          room: editedRoom
+          room: editedRoom,
+          timeSlot: editedTimeSlot,
+          startTime: editedStartTime,
+          endTime: editedEndTime
         };
       }
       return s;
@@ -202,7 +243,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     storage.saveMasterTeacherSchedule(updatedSchedule);
 
     // Synchronize to SQLite Timetable database
-    updateTimetableSlot(slot.id, editedSubject, slot.timeSlot).catch((err) => {
+    updateTimetableSlot(slot.id, editedSubject, editedTimeSlot).catch((err) => {
       console.warn('SQLite timetable update warning:', err);
     });
 
@@ -378,6 +419,15 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   <span>Unlock Admin Edit</span>
                 </button>
               )}
+
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl text-xs font-bold transition-all border border-indigo-400/40 shadow-xs"
+                title="Upload or generate new timetable (Grade 1-3 or 4-6)"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Upload New Timetable</span>
+              </button>
 
               <button
                 onClick={handleResetSchedule}

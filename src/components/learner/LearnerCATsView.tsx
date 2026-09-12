@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Student, 
-  SubjectName, 
-  STANDARD_SUBJECTS 
+  SubjectName 
 } from '../../types';
 import { 
   Award, 
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { calculateStudentOverallPercentage, getCBCRating, CBC_SUBJECT_COLORS } from '../../data/initialData';
 import { GlobalCBEEvaluationManager } from '../common/GlobalCBEEvaluationManager';
+import { getSubjectsForGrade, getSubjectScore } from '../../services/subjectOrder';
 
 interface LearnerCATsViewProps {
   student: Student;
@@ -29,7 +29,14 @@ export const LearnerCATsView: React.FC<LearnerCATsViewProps> = ({
   onBack
 }) => {
   const [activeTab, setActiveTab] = useState<'continuous-scores' | 'cbe-evaluator'>('continuous-scores');
-  const [selectedSubject, setSelectedSubject] = useState<SubjectName>('Mathematics');
+  const subjects = getSubjectsForGrade(student.grade);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectName>(subjects[0]);
+
+  useEffect(() => {
+    if (!subjects.includes(selectedSubject)) {
+      setSelectedSubject(subjects[0]);
+    }
+  }, [student.grade, subjects, selectedSubject]);
 
   const overallPct = calculateStudentOverallPercentage(student);
   const overallRating = getCBCRating(overallPct);
@@ -98,11 +105,11 @@ export const LearnerCATsView: React.FC<LearnerCATsViewProps> = ({
 
       {/* Subject Summary Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {STANDARD_SUBJECTS.map((sub) => {
-          const marks = student.catMarks[sub] || { cat1: 0, cat2: 0, endTerm: 0 };
+        {subjects.map((sub, idx) => {
+          const marks = getSubjectScore(student.catMarks, sub);
           const subPct = Math.round((marks.cat1 / 30) * 20 + (marks.cat2 / 30) * 20 + (marks.endTerm / 100) * 60);
           const rating = getCBCRating(subPct);
-          const colors = CBC_SUBJECT_COLORS[sub];
+          const colors = CBC_SUBJECT_COLORS[sub as any] || { accent: 'bg-blue-500', bg: 'bg-blue-50' };
           const isSelected = selectedSubject === sub;
 
           return (
@@ -116,10 +123,10 @@ export const LearnerCATsView: React.FC<LearnerCATsViewProps> = ({
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${isSelected ? 'text-blue-200' : 'text-slate-500 dark:text-slate-400'}`}>
-                  {sub}
+                <span className={`text-xs font-bold line-clamp-1 ${isSelected ? 'text-blue-200' : 'text-slate-700 dark:text-slate-300'}`}>
+                  #{idx + 1} {sub}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : `${rating.bg} text-white`}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-1 ${isSelected ? 'bg-white/20 text-white' : `${rating.bg} text-white`}`}>
                   {rating.code}
                 </span>
               </div>
@@ -155,7 +162,7 @@ export const LearnerCATsView: React.FC<LearnerCATsViewProps> = ({
             </div>
 
             {(() => {
-              const m = student.catMarks[selectedSubject] || { cat1: 0, cat2: 0, endTerm: 0 };
+              const m = getSubjectScore(student.catMarks, selectedSubject);
               const sPct = Math.round((m.cat1 / 30) * 20 + (m.cat2 / 30) * 20 + (m.endTerm / 100) * 60);
               const r = getCBCRating(sPct);
               return (

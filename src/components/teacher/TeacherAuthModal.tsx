@@ -326,18 +326,8 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                    <span>Default: <strong className="font-mono text-blue-600 dark:text-blue-400">teacher123</strong></span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPassword('teacher123');
-                        setError(null);
-                      }}
-                      className="text-[10px] font-bold text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800"
-                    >
-                      Fill Default
-                    </button>
+                  <div className="text-[11px] text-slate-400 pt-1">
+                    <span>Enter your official authorized faculty password.</span>
                   </div>
                 </div>
 
@@ -426,18 +416,8 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                  <span>Default: <strong className="font-mono text-blue-600 dark:text-blue-400">teacher123</strong> (or teacher's name)</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPassword('teacher123');
-                      setError(null);
-                    }}
-                    className="text-[10px] font-bold text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800"
-                  >
-                    Fill Default
-                  </button>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  <span>Enter your authentic teacher credentials or official TSC number.</span>
                 </div>
               </div>
 

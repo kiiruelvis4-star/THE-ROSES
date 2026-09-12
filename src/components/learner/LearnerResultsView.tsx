@@ -1,5 +1,5 @@
 import React from 'react';
-import { Student, STANDARD_SUBJECTS } from '../../types';
+import { Student } from '../../types';
 import { 
   Award, 
   ArrowLeft, 
@@ -14,22 +14,36 @@ import {
 import { calculateStudentOverallPercentage, getCBCRating } from '../../data/initialData';
 import { SchoolLogo } from '../SchoolLogo';
 import { storage } from '../../services/storageService';
+import { getSubjectsForGrade, getSubjectScore } from '../../services/subjectOrder';
+
+const SUBJECT_REMARKS: Record<string, string> = {
+  // Lower primary
+  'Indigenous Language Activities': 'Demonstrates rich oral expression and active cultural storytelling.',
+  'Kiswahili Language Activities': 'Kazi nzuri sana katika kusikiliza, kusoma kwa sauti na kuandika maneno safi.',
+  'English Language Activities': 'Reads fluently with good phonics blending and neat handwriting.',
+  'Mathematical Activities': 'Has strong pre-number and numerical reasoning skills. Excellent counting and addition.',
+  'Environmental Activities': 'Very observant of nature, hygiene habits, and caring for plants and animals.',
+  'Creative Activities': 'Shows vivid creativity in coloring, drawing, and active participation in folk dance.',
+  'Religious Education Activities': 'Exhibits exemplary Christian moral values, kindness, and respect toward others.',
+  
+  // Upper primary
+  'Mathematics': 'Has strong number sense and computational speed. Keep up the high standard.',
+  'English': 'Expresses ideas fluently in spoken and written English. Good vocabulary.',
+  'Kiswahili': 'Kazi nzuri sana katika sarufi na kuandika insha safi.',
+  'Science and Technology': 'Shows inquisitive scientific mindset and great interest in digital computing.',
+  'Science': 'Shows inquisitive scientific mindset and great lab safety awareness.',
+  'Agriculture and Nutrition': 'Actively participates in organic farming, crop care, and food nutrition.',
+  'Agriculture': 'Actively participates in organic farming and environmental conservation.',
+  'Creative Arts': 'Demonstrates artistic flair and rhythmic precision in music.',
+  'Social Studies': 'Well informed on civic responsibilities and geographical features.',
+  'Religious Education': 'Exhibits exemplary Christian moral values and kindness toward peers.',
+  'CRE': 'Exhibits exemplary Christian moral values and kindness toward peers.'
+};
 
 interface LearnerResultsViewProps {
   student: Student;
   onBack: () => void;
 }
-
-const SUBJECT_REMARKS: Record<string, string> = {
-  'Mathematics': 'Has strong number sense and computational speed. Keep up the high standard.',
-  'English': 'Expresses ideas fluently in spoken and written English. Good vocabulary.',
-  'Kiswahili': 'Kazi nzuri sana katika sarufi na kuandika insha safi.',
-  'Science': 'Shows inquisitive scientific mindset and great lab safety awareness.',
-  'Agriculture': 'Actively participates in organic farming and environmental conservation.',
-  'Creative Arts': 'Demonstrates artistic flair and rhythmic precision in music.',
-  'Social Studies': 'Well informed on civic responsibilities and geographical features.',
-  'CRE': 'Exhibits exemplary Christian moral values and kindness toward peers.'
-};
 
 export const LearnerResultsView: React.FC<LearnerResultsViewProps> = ({
   student,
@@ -135,14 +149,15 @@ export const LearnerResultsView: React.FC<LearnerResultsViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {STANDARD_SUBJECTS.map((sub) => {
-                const marks = student.catMarks[sub] || { cat1: 0, cat2: 0, endTerm: 0 };
+              {getSubjectsForGrade(student.grade).map((sub, idx) => {
+                const marks = getSubjectScore(student.catMarks, sub);
                 const subPct = Math.round((marks.cat1 / 30) * 20 + (marks.cat2 / 30) * 20 + (marks.endTerm / 100) * 60);
                 const rating = getCBCRating(subPct);
 
                 return (
                   <tr key={sub} className="border-b border-slate-300 dark:border-slate-700">
                     <td className="p-2.5 font-bold border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <span className="text-[10px] text-slate-400 font-mono mr-1.5">#{idx + 1}</span>
                       {sub}
                     </td>
                     <td className="p-2.5 border border-slate-300 dark:border-slate-700 text-center font-semibold">{marks.cat1}</td>
@@ -231,7 +246,7 @@ export const LearnerResultsView: React.FC<LearnerResultsViewProps> = ({
 
         {/* Next Term Date Notice */}
         <div className="text-center p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300">
-          Next Term Opening Date: <span className="text-blue-900 dark:text-blue-400 font-black">May 5th, 2026</span> • All fees must be cleared prior to opening.
+          Next Term Opening Date: <span className="text-blue-900 dark:text-blue-400 font-black">May 5th, 2026</span> • All holiday assignments must be completed prior to opening.
         </div>
       </div>
     </div>

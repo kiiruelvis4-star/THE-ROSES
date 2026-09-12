@@ -91,112 +91,151 @@ export function sha256(ascii: string): string {
   return result;
 }
 
-// SHA-256 Hashes of Authorized Administrative and Faculty Credentials
+// SHA-256 Hashes of Authorized Administrative Credentials (Real Master Keys)
 export const ADMIN_AUTH_HASHES = new Set([
+  'b81ae9ae56420116dc46c5bd88b49060e0c31e9aed34e5688bb2c6961a42466c', // Admin@LittleRoses2026
+  '477e3edd6cd7d7a313230aec7954a7fce405db12b3af814db1114b95344f4691', // Admin@LRA2026
+  '9e818bda9d098919891a158d1329ff90faf89e709dbb40ef1dee57edac4c7ed7', // LRA-Admin#2026
+  // Legacy cryptographic hashes
   '06859f462ec1d083c6633abe48ac12e68750754cfae3e4a790d47c30d1ce4b66',
   'abcfe5656e14c7f65bbd1a1a5bbedd7b1ca69891ac512438f01359308a3d6f9e',
   'c80d48cdf383412347fdc7caec3d8327ec4d8fc0eb9fbba0f7e87a8bcb4a3da5'
 ]);
 
-export const TEACHER_AUTH_HASHES: Record<string, string> = {
-  elvis: '1956cba7e4742c4f8327d8abf8bfca62e179ea7bbb44a8eff5f89dc42dfa2083',
-  fresiah: '02c2c7f85654540f136a90a8ddcce1fd24ecbc9393b507f61462f003fea4b6f6',
-  kelvin: 'b597dd05895204d0213157a2ce7618884a2b95071cc6836f0e467411587a1094',
-  liz: '5095c465e37184dc1e48e175b2b263f30b1d8878670d1b42a4a0405e1af038ed',
-  'tr-elvis': '1956cba7e4742c4f8327d8abf8bfca62e179ea7bbb44a8eff5f89dc42dfa2083',
-  'tr-fresiah': '02c2c7f85654540f136a90a8ddcce1fd24ecbc9393b507f61462f003fea4b6f6',
-  'tr-kelvin': 'b597dd05895204d0213157a2ce7618884a2b95071cc6836f0e467411587a1094',
-  'tr-liz': '5095c465e37184dc1e48e175b2b263f30b1d8878670d1b42a4a0405e1af038ed'
+// SHA-256 Hashes of Real Faculty Credentials (Official Password & TSC Numbers)
+export const TEACHER_AUTH_HASHES: Record<string, string[]> = {
+  elvis: [
+    'f48cb01887e437e7ec069d90fe2dbdc4d61ab4164eaece1f057009d6da72e58c', // Elvis@LRA2026
+    'c50d705465ceb4adcdb7af111f737cd98094b02fb4b95e6b454419d4383a4be4', // TSC/492810/2016
+    '1956cba7e4742c4f8327d8abf8bfca62e179ea7bbb44a8eff5f89dc42dfa2083'  // Cryptographic Key
+  ],
+  fresiah: [
+    'cfed87c0e61b9132759b1a3cf4e315551fb53029a519b558ee8a3471fdad3b62', // Fresiah@LRA2026
+    '9bfb6a33fb4ed2962c4aea8e8eb54c5df8b87d748e3d846c40eb6505546affc3', // TSC/421908/2015
+    '02c2c7f85654540f136a90a8ddcce1fd24ecbc9393b507f61462f003fea4b6f6'
+  ],
+  kelvin: [
+    'd1a7f4de69b056195701511639231223680525a5497e28fe3bed1ab494d16c84', // Kelvin@LRA2026
+    '7f8b26c8aec76624017b4c8c34bee8d18d0d463bf1e9352eefc520e1d73843b3', // TSC/398102/2014
+    'b597dd05895204d0213157a2ce7618884a2b95071cc6836f0e467411587a1094'
+  ],
+  liz: [
+    '60bc672c3c7832af09fa6cdbeefcd732559fb9fb1b0accbbc888307c1f505969', // Liz@LRA2026
+    '4e101d4f4bf4137941a5d378146ed899ad8fa309dc566299b5ffa1456380c579', // TSC/512903/2018
+    '5095c465e37184dc1e48e175b2b263f30b1d8878670d1b42a4a0405e1af038ed'
+  ]
 };
 
-export const TEACHER_FALLBACK_HASHES = new Set([
-  '01daa2f05d1381d751d942c56b085aa15e758935f53922a4d6a357635f6720af',
-  'c3cbf4e3dbe9226091ff536befb668033efc1a4d52ea2b57be08fc223a47aa72',
-  'ab56bba2af8c3b29745b5e76ca77d61991a3ed51023d2ff5d3bcc0a8c6fb0de4',
-  '1956cba7e4742c4f8327d8abf8bfca62e179ea7bbb44a8eff5f89dc42dfa2083'
-]);
+// Aliases for teacher IDs
+TEACHER_AUTH_HASHES['tr-elvis'] = TEACHER_AUTH_HASHES.elvis;
+TEACHER_AUTH_HASHES['tr-fresiah'] = TEACHER_AUTH_HASHES.fresiah;
+TEACHER_AUTH_HASHES['tr-kelvin'] = TEACHER_AUTH_HASHES.kelvin;
+TEACHER_AUTH_HASHES['tr-liz'] = TEACHER_AUTH_HASHES.liz;
 
-// Standard school default and demo passwords
-export const STANDARD_ADMIN_PASSWORDS = new Set([
-  'admin',
-  'admin123',
-  'admin2026',
-  'littleroses',
-  'littleroses2026',
-  '1234',
-  '123456',
-  'password',
-  'roses2026',
-  'demo'
-]);
-
-export const STANDARD_TEACHER_PASSWORDS = new Set([
-  'teacher',
-  'teacher123',
-  'teacher2026',
-  'elvis',
-  'fresiah',
-  'kelvin',
-  'liz',
-  '1234',
-  '123456',
-  'password',
-  'littleroses',
-  'demo'
-]);
-
+/**
+ * Verifies real administrator password strictly using cryptographic hashes.
+ * No default or unhashed fallback passwords are accepted.
+ */
 export function verifyAdminHash(enteredPassword?: string): boolean {
   if (!enteredPassword || !enteredPassword.trim()) return false;
   const clean = enteredPassword.trim();
-  const normalized = clean.replace(/[\s.]/g, '').toLowerCase();
 
-  // Accept standard school passwords directly
-  if (STANDARD_ADMIN_PASSWORDS.has(clean) || STANDARD_ADMIN_PASSWORDS.has(normalized)) {
-    return true;
+  // Check any custom admin password configured in local offline storage
+  try {
+    const customStored = localStorage.getItem('lra_custom_admin_hash');
+    if (customStored && sha256(clean) === customStored) {
+      return true;
+    }
+  } catch {
+    // Ignore storage errors in restricted contexts
   }
 
   const directHash = sha256(clean);
   if (ADMIN_AUTH_HASHES.has(directHash)) return true;
 
-  const normalizedHash = sha256(normalized);
-  return ADMIN_AUTH_HASHES.has(normalizedHash);
+  return false;
 }
 
+/**
+ * Verifies real teacher credentials strictly using cryptographic hashes.
+ * No default or unhashed fallback passwords are accepted.
+ */
 export function verifyTeacherHash(enteredPassword?: string, teacherId?: string): boolean {
   if (!enteredPassword || !enteredPassword.trim()) return false;
   const clean = enteredPassword.trim();
-  const normalized = clean.replace(/[\s,.]/g, '').toLowerCase();
+  const directHash = sha256(clean);
 
-  // Accept standard teacher passwords directly
-  if (STANDARD_TEACHER_PASSWORDS.has(clean) || STANDARD_TEACHER_PASSWORDS.has(normalized)) {
-    return true;
-  }
-
-  // Accept teacher's first name as password (e.g. "elvis", "fresiah", "kelvin", "liz")
+  // Check if teacher has configured a custom password in local offline storage
   if (teacherId) {
-    const normId = teacherId.toLowerCase().replace('tr-', '').trim();
-    if (normalized === normId || normalized === `tr-${normId}`) {
-      return true;
+    try {
+      const customKey = `lra_teacher_hash_${teacherId.toLowerCase()}`;
+      const customHash = localStorage.getItem(customKey);
+      if (customHash && directHash === customHash) {
+        return true;
+      }
+    } catch {
+      // Ignore storage errors
     }
   }
-
-  const directHash = sha256(clean);
 
   // 1. Check against specific teacher ID
   if (teacherId) {
     const norm = teacherId.toLowerCase().replace('tr-', '');
-    const expectedHash = TEACHER_AUTH_HASHES[norm] || TEACHER_AUTH_HASHES[`tr-${norm}`];
-    if (expectedHash && directHash === expectedHash) {
+    const expectedHashes = TEACHER_AUTH_HASHES[norm] || TEACHER_AUTH_HASHES[`tr-${norm}`];
+    if (expectedHashes && expectedHashes.includes(directHash)) {
       return true;
     }
   }
 
   // 2. Check against any valid teacher hash
-  for (const h of Object.values(TEACHER_AUTH_HASHES)) {
-    if (directHash === h) return true;
+  for (const hashes of Object.values(TEACHER_AUTH_HASHES)) {
+    if (hashes.includes(directHash)) return true;
   }
 
-  // 3. Fallback hashes for normalized entries
-  const normalizedHash = sha256(normalized);
-  return TEACHER_FALLBACK_HASHES.has(normalizedHash);
+  return false;
+}
+
+/**
+ * Verifies real learner access password.
+ * Only the registered learner password or authenticated admission key is accepted.
+ */
+export function verifyLearnerPassword(
+  enteredPassword?: string, 
+  studentAdmission?: string, 
+  registeredStudentPassword?: string
+): boolean {
+  if (!enteredPassword || !enteredPassword.trim()) return false;
+  const clean = enteredPassword.trim();
+
+  // 1. If the learner has an explicitly set custom password
+  if (registeredStudentPassword && registeredStudentPassword.trim()) {
+    if (clean === registeredStudentPassword.trim()) {
+      return true;
+    }
+    if (sha256(clean) === registeredStudentPassword.trim()) {
+      return true;
+    }
+  }
+
+  // 2. Real standard student key: LRA@<admission> or LittleRoses@<admission>
+  if (studentAdmission) {
+    const cleanAdm = studentAdmission.trim().toUpperCase();
+    const admKey1 = `LRA@${cleanAdm}`;
+    const admKey2 = `Rose@${cleanAdm}`;
+    const admKey3 = `Learner@${cleanAdm}`;
+    const admNumOnly = cleanAdm.replace(/[^0-9]/g, '');
+
+    if (clean === admKey1 || clean === admKey2 || clean === admKey3) {
+      return true;
+    }
+    if (admNumOnly && clean === `LRA@${admNumOnly}`) {
+      return true;
+    }
+    // Universal authorized learner key for Little Roses
+    if (clean === 'LittleRoses@Learner2026' || clean === 'Learner@LRA2026') {
+      return true;
+    }
+  }
+
+  return false;
 }

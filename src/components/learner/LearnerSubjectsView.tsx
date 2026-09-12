@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Student, 
-  SubjectName, 
-  STANDARD_SUBJECTS 
+  SubjectName 
 } from '../../types';
 import { 
   BookOpen, 
@@ -16,6 +15,7 @@ import {
   Award
 } from 'lucide-react';
 import { CBC_SUBJECT_COLORS } from '../../data/initialData';
+import { getSubjectsForGrade, getSubjectScore } from '../../services/subjectOrder';
 
 interface LearnerSubjectsViewProps {
   student: Student;
@@ -24,57 +24,130 @@ interface LearnerSubjectsViewProps {
 }
 
 const SUBJECT_DETAILS: Record<string, { teacher: string; strandsCount: number; lessonsPerWeek: number; summary: string; coreStrands: string[] }> = {
+  // Lower Primary (Grade 1 - 3) Ordered Subjects
+  'Indigenous Language Activities': {
+    teacher: 'Madam Liz',
+    strandsCount: 4,
+    lessonsPerWeek: 3,
+    summary: 'Listening, speaking, cultural storytelling, indigenous songs, and mother tongue language communication.',
+    coreStrands: ['Listening & Talking Fluently', 'Cultural Stories & Proverbs', 'Vocabulary & Expressions', 'Community Living Values']
+  },
+  'Kiswahili Language Activities': {
+    teacher: 'Madam Liz & Tr. Mwangi',
+    strandsCount: 4,
+    lessonsPerWeek: 5,
+    summary: 'Kusikiliza na kuzungumza, kusoma, kuandika maneno na sentensi, na sarufi ya msingi ya Kiswahili.',
+    coreStrands: ['Kusikiliza na Kuzungumza', 'Kusoma kwa Sauti na Ufahamu', 'Kuandika na Maumbo ya Herufi', 'Sarufi na Msamiati']
+  },
+  'English Language Activities': {
+    teacher: 'Mr. Kelvin & Tr. Grace',
+    strandsCount: 4,
+    lessonsPerWeek: 5,
+    summary: 'Phonics, listening fluency, reading comprehension, handwriting, spelling, and vocabulary building.',
+    coreStrands: ['Phonics & Word Blending', 'Listening & Spoken Fluency', 'Guided Reading Comprehension', 'Sentence Construction']
+  },
+  'Mathematical Activities': {
+    teacher: 'Mr. Elvis & Madam Fresiah',
+    strandsCount: 4,
+    lessonsPerWeek: 5,
+    summary: 'Pre-number activities, numbers and operations, measurement (time, money, length), and basic geometry.',
+    coreStrands: ['Number Classification & Counting', 'Addition & Subtraction Concepts', 'Measurements (Length, Mass, Money)', 'Geometry & Patterns']
+  },
+  'Environmental Activities': {
+    teacher: 'Madam Liz & Madam Fresiah',
+    strandsCount: 4,
+    lessonsPerWeek: 4,
+    summary: 'Our school, home environment, plants, domestic animals, hygiene, weather, and water safety.',
+    coreStrands: ['Living in Our Community', 'Caring for Plants & Animals', 'Health, Nutrition & Hygiene', 'Weather, Sky & Soil']
+  },
+  'Creative Activities': {
+    teacher: 'Mr. Elvis & Tr. Alice',
+    strandsCount: 4,
+    lessonsPerWeek: 3,
+    summary: 'Drawing, pattern coloring, modeling, paper craft, singing, dancing, and rhythmic movement.',
+    coreStrands: ['Drawing & Paper Mache', 'Clay Modeling & Weaving', 'Kenyan Folk Songs & Chants', 'Rhythmic Movement & Dance']
+  },
+  'Religious Education Activities': {
+    teacher: 'Madam Fresiah & Tr. Mary',
+    strandsCount: 3,
+    lessonsPerWeek: 3,
+    summary: 'Creation, God’s love, moral living, kindness, prayer, church values, and loving our neighbors.',
+    coreStrands: ['God the Creator & His Gifts', 'The Life of Jesus & Parables', 'Christian Moral Habits', 'Family & Community Fellowship']
+  },
+
+  // Upper Primary (Grade 4 - 6) Subjects
   'Mathematics': {
-    teacher: 'Tr. Jane Wangari',
+    teacher: 'Mr. Elvis & Madam Fresiah',
     strandsCount: 4,
     lessonsPerWeek: 5,
     summary: 'Numbers, algebra, measurements, geometry, data handling, and financial literacy.',
     coreStrands: ['Numbers & Operations', 'Measurements & Area', 'Geometry & Angles', 'Data Handling & Probability']
   },
   'English': {
-    teacher: 'Tr. Kelvin M.',
+    teacher: 'Mr. Kelvin & Tr. Grace',
     strandsCount: 4,
     lessonsPerWeek: 5,
     summary: 'Listening and speaking, reading comprehension, language structures, creative composition.',
     coreStrands: ['Listening & Speaking Fluency', 'Reading & Context Clues', 'Language Structures & Grammar', 'Creative Writing']
   },
   'Kiswahili': {
-    teacher: 'Tr. Mwangi S.',
+    teacher: 'Madam Liz & Tr. Mwangi',
     strandsCount: 4,
     lessonsPerWeek: 4,
     summary: 'Kusikiliza na kuongea, kusoma kwa ufahamu, sarufi ya ngeli, na utungaji wa insha.',
     coreStrands: ['Kusikiliza na Kuzungumza', 'Kusoma kwa Ufahamu', 'Sarufi na Matumizi ya Lugha', 'Kuandika Insha']
   },
+  'Science and Technology': {
+    teacher: 'Madam Fresiah',
+    strandsCount: 5,
+    lessonsPerWeek: 4,
+    summary: 'Living things, human body systems, computing devices, matter and energy, environment.',
+    coreStrands: ['Human Organ Systems', 'Plants & Animals Classification', 'Matter & Simple Machines', 'Basic Computing & Digital Safety']
+  },
   'Science': {
-    teacher: 'Tr. Jane Wangari',
+    teacher: 'Madam Fresiah',
     strandsCount: 5,
     lessonsPerWeek: 4,
     summary: 'Living things, human body systems, matter and energy, earth and space science.',
     coreStrands: ['Human Organ Systems', 'Plants & Animals Classification', 'Matter & Simple Machines', 'Environmental Science']
   },
+  'Agriculture and Nutrition': {
+    teacher: 'Mr. Kelvin',
+    strandsCount: 4,
+    lessonsPerWeek: 4,
+    summary: 'Soil conservation, crop production, animal welfare, food preparation, and nutrition.',
+    coreStrands: ['Soil & Water Conservation', 'Crop Production & Nursery', 'Animal Care & Handling', 'Food Preparation & Preservation']
+  },
   'Agriculture': {
-    teacher: 'Tr. Kibet J.',
+    teacher: 'Mr. Kelvin',
     strandsCount: 4,
     lessonsPerWeek: 3,
     summary: 'Soil conservation, organic composting, vegetable gardening, and domestic livestock care.',
     coreStrands: ['Soil & Water Conservation', 'Crop Production & Nursery', 'Animal Production', 'Agri-Business & Marketing']
   },
   'Creative Arts': {
-    teacher: 'Tr. Alice N.',
+    teacher: 'Mr. Elvis',
     strandsCount: 4,
     lessonsPerWeek: 3,
     summary: 'Visual arts, Kenyan folk songs, instruments, dance choreography, and dramatic expressions.',
     coreStrands: ['Drawing & Painting', 'Folk Music & Indigenous Instruments', 'Rhythm & Choreography', 'Fabric Arts & Craft']
   },
   'Social Studies': {
-    teacher: 'Tr. Otieno B.',
+    teacher: 'Mr. Elvis',
     strandsCount: 4,
     lessonsPerWeek: 3,
     summary: 'Physical environment of Eastern Africa, weather and climate, citizen rights and governance.',
     coreStrands: ['Physical Geography of Kenya', 'People and Population', 'Culture & Social Organization', 'Good Governance & Leadership']
   },
+  'Religious Education': {
+    teacher: 'Madam Fresiah',
+    strandsCount: 3,
+    lessonsPerWeek: 3,
+    summary: 'Creation and stewardship, Christian moral values, faith in community, church fellowship.',
+    coreStrands: ['Creation & Stewardship', 'The Holy Bible & Teachings', 'Christian Moral Living', 'Church and Society']
+  },
   'CRE': {
-    teacher: 'Tr. Mary W.',
+    teacher: 'Madam Fresiah',
     strandsCount: 3,
     lessonsPerWeek: 3,
     summary: 'Creation and stewardship, Christian moral values, faith in community, church fellowship.',
@@ -87,7 +160,16 @@ export const LearnerSubjectsView: React.FC<LearnerSubjectsViewProps> = ({
   onBack,
   onOpenQuizzesForSubject
 }) => {
-  const [selectedSubject, setSelectedSubject] = useState<SubjectName>('Mathematics');
+  // Ordered subjects based on student grade level
+  const orderedSubjects = getSubjectsForGrade(student.grade);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectName>(orderedSubjects[0]);
+
+  // Keep selected subject in sync when grade changes
+  useEffect(() => {
+    if (!orderedSubjects.includes(selectedSubject)) {
+      setSelectedSubject(orderedSubjects[0]);
+    }
+  }, [student.grade, orderedSubjects, selectedSubject]);
 
   const info = SUBJECT_DETAILS[selectedSubject] || {
     teacher: 'Assigned Teacher',
@@ -96,7 +178,8 @@ export const LearnerSubjectsView: React.FC<LearnerSubjectsViewProps> = ({
     summary: 'Core competency learning area aligning with KICD curriculum designs.',
     coreStrands: ['Strand 1: Concepts & Practice', 'Strand 2: Application & Skills', 'Strand 3: Projects & Activities', 'Strand 4: Evaluation & Reflection']
   };
-  const marks = student.catMarks[selectedSubject] || { cat1: 0, cat2: 0, endTerm: 0 };
+
+  const marks = getSubjectScore(student.catMarks, selectedSubject);
   const subPct = Math.round((marks.cat1 / 30) * 20 + (marks.cat2 / 30) * 20 + (marks.endTerm / 100) * 60);
 
   return (
@@ -109,19 +192,28 @@ export const LearnerSubjectsView: React.FC<LearnerSubjectsViewProps> = ({
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading">
-          My CBC Learning Subjects
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          Curriculum designs, core competency strands, and assigned subject teachers for {student.grade}.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-heading">
+              My CBC Learning Subjects
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Curriculum designs, core competency strands, and assigned subject teachers for {student.grade}.
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-bold text-xs border border-blue-200 dark:border-blue-800 w-fit">
+            {orderedSubjects.length} KICD Ordered Subjects
+          </span>
+        </div>
       </div>
 
       {/* Subject Grid Selector */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {STANDARD_SUBJECTS.map((sub) => {
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {orderedSubjects.map((sub, idx) => {
           const isSelected = selectedSubject === sub;
-          const colors = CBC_SUBJECT_COLORS[sub];
+          const colors = CBC_SUBJECT_COLORS[sub as any] || { accent: 'bg-blue-500', bg: 'bg-blue-50' };
+          const details = SUBJECT_DETAILS[sub];
+
           return (
             <button
               key={sub}
@@ -133,11 +225,14 @@ export const LearnerSubjectsView: React.FC<LearnerSubjectsViewProps> = ({
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold truncate">{sub}</span>
-                <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-rose-400' : colors.accent}`} />
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-black/10 dark:bg-white/10">
+                  #{idx + 1}
+                </span>
+                <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-rose-400' : colors.accent}`} />
               </div>
-              <div className={`text-[11px] mt-1 ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
-                {SUBJECT_DETAILS[sub].teacher}
+              <div className="text-xs font-extrabold mt-1.5 leading-snug line-clamp-2">{sub}</div>
+              <div className={`text-[11px] mt-1 truncate ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
+                {details?.teacher || 'Subject Teacher'}
               </div>
             </button>
           );

@@ -44,8 +44,8 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
   const handleDownloadAPK = () => {
     setDownloadTriggered(true);
     const a = document.createElement('a');
-    a.href = '/LittleRoses.apk';
-    a.download = 'LittleRoses.apk';
+    a.href = '/LittleRosesAcademy.apk';
+    a.download = 'LittleRosesAcademy.apk';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -55,8 +55,8 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
   const handleDownloadZip = () => {
     setZipDownloadTriggered(true);
     const a = document.createElement('a');
-    a.href = '/LittleRoses-source.zip';
-    a.download = 'LittleRoses-source.zip';
+    a.href = '/LittleRosesAcademy-source.zip';
+    a.download = 'LittleRosesAcademy-source.zip';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -199,12 +199,12 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({
               {downloadTriggered ? (
                 <>
                   <Check className="w-5 h-5 text-emerald-100" />
-                  <span>Downloading LittleRoses.apk...</span>
+                  <span>Downloading LittleRosesAcademy.apk...</span>
                 </>
               ) : (
                 <>
                   <ArrowDownCircle className="w-5 h-5" />
-                  <span>Download Little Roses APK (v2.0.0)</span>
+                  <span>Download Little Roses Academy APK (v2.0.0)</span>
                 </>
               )}
             </button>

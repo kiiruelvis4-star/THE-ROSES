@@ -32,7 +32,9 @@ import {
   KeyRound,
   ShieldCheck,
   RotateCcw,
-  Lock
+  Lock,
+  Upload,
+  FileText
 } from 'lucide-react';
 import { MyClassesView } from './MyClassesView';
 import { SchemesAndLessonsView } from './SchemesAndLessonsView';
@@ -40,12 +42,11 @@ import { AssessmentsManager } from './AssessmentsManager';
 import { AssignmentsManager } from './AssignmentsManager';
 import { QuizBuilder } from './QuizBuilder';
 import { ResourcesManager } from './ResourcesManager';
-import { TeacherResourcesView } from './TeacherResourcesView';
 import { TimetableView } from './TimetableView';
 import { CalendarView } from '../common/CalendarView';
 import { KNECProjectsSyncManager } from './KNECProjectsSyncManager';
 import { ExamSeriesManager } from './ExamSeriesManager';
-import { TeacherCRUDModal, CRUDModalType } from '../modals/TeacherCRUDModal';
+import { UnifiedTeacherActionModal, UnifiedTeacherActionType } from '../modals/UnifiedTeacherActionModal';
 import { SchoolConfigModal } from '../modals/SchoolConfigModal';
 import { LearnerQuizZoneView } from '../learner/LearnerQuizZoneView';
 import { TeacherAuthModal } from './TeacherAuthModal';
@@ -79,10 +80,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onBackToPortals
 }) => {
   const [activeTab, setActiveTab] = useState<TeacherTab>('classes');
-  const [crudModalType, setCrudModalType] = useState<CRUDModalType>(null);
+  const [crudModalType, setCrudModalType] = useState<UnifiedTeacherActionType | null>(null);
   const [editingItemData, setEditingItemData] = useState<any>(null);
   const [previewQuiz, setPreviewQuiz] = useState<Quiz | null>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
   const [systemConfig, setSystemConfig] = useState(() => storage.getSystemConfig());
 
   const knecProjects = storage.getKNECProjects();
@@ -98,49 +100,24 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     { id: 'assessments' as TeacherTab, label: 'CATs & Assessments', icon: FileSpreadsheet },
     { id: 'assignments' as TeacherTab, label: 'Assignments', icon: FileCheck, count: assignments.length },
     { id: 'quizzes' as TeacherTab, label: 'Quiz Zone', icon: HelpCircle, count: quizzes.length },
-    { id: 'resources' as TeacherTab, label: 'Resources', icon: FolderOpen, count: resources.length },
     { id: 'timetable' as TeacherTab, label: 'My Timetable', icon: Clock },
     { id: 'calendar' as TeacherTab, label: 'Calendar', icon: Calendar }
   ];
 
-  const handleOpenCreate = (type: CRUDModalType) => {
+  const handleOpenCreate = (type: UnifiedTeacherActionType) => {
     setEditingItemData(null);
     setCrudModalType(type);
+    setIsSpeedDialOpen(false);
   };
 
-  const handleOpenEdit = (type: CRUDModalType, item: any) => {
+  const handleOpenEdit = (type: UnifiedTeacherActionType, item: any) => {
     setEditingItemData(item);
     setCrudModalType(type);
   };
 
-  // Determine modal type for floating + action button based on active tab
+  // When + button is clicked, toggle the action menu
   const handleFloatingAction = () => {
-    switch (activeTab) {
-      case 'classes':
-        handleOpenCreate('student');
-        break;
-      case 'schemes':
-        handleOpenCreate('scheme');
-        break;
-      case 'assessments':
-        handleOpenCreate('student');
-        break;
-      case 'assignments':
-        handleOpenCreate('assignment');
-        break;
-      case 'quizzes':
-        handleOpenCreate('quiz');
-        break;
-      case 'resources':
-        handleOpenCreate('resource');
-        break;
-      case 'calendar':
-        handleOpenCreate('event');
-        break;
-      default:
-        handleOpenCreate('scheme');
-        break;
-    }
+    setIsSpeedDialOpen(prev => !prev);
   };
 
   return (
@@ -323,10 +300,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             />
           )}
 
-          {activeTab === 'resources' && (
-            <TeacherResourcesView teacher={activeTeacher} />
-          )}
-
           {activeTab === 'timetable' && (
             <TimetableView 
               timetable={timetable} 
@@ -348,22 +321,143 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </>
       )}
 
+      {/* FLOATING ACTION SPEED DIAL MENU */}
+      {isSpeedDialOpen && (
+        <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end gap-2.5 animate-fadeIn no-print">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-1 w-64">
+            <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Quick Teacher Action
+              </span>
+              <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-bold">
+                + Create / Add
+              </span>
+            </div>
+
+            {/* 1. UPLOAD DOCUMENT (PRIMARY USER REQUEST) */}
+            <button
+              onClick={() => handleOpenCreate('upload')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-950/60 hover:text-blue-900 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                <Upload className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Upload Document</div>
+                <div className="text-[10px] text-slate-400 font-medium">PDF, Word, CATs, Schemes</div>
+              </div>
+            </button>
+
+            {/* 2. RAW DATA & LIVE CLOCK (PRIMARY USER REQUEST) */}
+            <button
+              onClick={() => handleOpenCreate('raw')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-900 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Raw Data & Live Clock</div>
+                <div className="text-[10px] text-slate-400 font-medium">Direct input & templates</div>
+              </div>
+            </button>
+
+            {/* 3. SCHEME OF WORK */}
+            <button
+              onClick={() => handleOpenCreate('scheme')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center group-hover:bg-slate-700 group-hover:text-white transition-colors shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Scheme of Work</div>
+                <div className="text-[10px] text-slate-400 font-medium">10-column KICD builder</div>
+              </div>
+            </button>
+
+            {/* 4. LESSON PLAN */}
+            <button
+              onClick={() => handleOpenCreate('lesson')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+                <FileCheck className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Lesson Plan Sheet</div>
+                <div className="text-[10px] text-slate-400 font-medium">35-minute CBE structure</div>
+              </div>
+            </button>
+
+            {/* 5. CAT / ASSESSMENT */}
+            <button
+              onClick={() => handleOpenCreate('cat')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-amber-50 dark:hover:bg-amber-950/60 hover:text-amber-900 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shrink-0">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">CAT / Exam Paper</div>
+                <div className="text-[10px] text-slate-400 font-medium">Create & calendar schedule</div>
+              </div>
+            </button>
+
+            {/* 6. CALENDAR EVENT */}
+            <button
+              onClick={() => handleOpenCreate('event')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Calendar Event</div>
+                <div className="text-[10px] text-slate-400 font-medium">Academic schedule</div>
+              </div>
+            </button>
+
+            {/* 7. ENROLL LEARNER */}
+            <button
+              onClick={() => handleOpenCreate('student')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-black text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition-colors shrink-0">
+                <Users className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <div className="font-extrabold truncate">Enroll Learner</div>
+                <div className="text-[10px] text-slate-400 font-medium">New student registration</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* FLOATING + ACTION BUTTON (Available on all teacher views) */}
       <button
         onClick={handleFloatingAction}
-        className="fixed bottom-6 right-6 z-40 p-4 bg-blue-900 hover:bg-blue-800 text-white rounded-full shadow-2xl hover:shadow-blue-900/40 transition-all hover:scale-110 active:scale-95 flex items-center justify-center group no-print"
-        title="Add New Entry (+ Action Button)"
+        className={`fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center group no-print ${
+          isSpeedDialOpen
+            ? 'bg-rose-600 hover:bg-rose-500 text-white rotate-45 scale-105'
+            : 'bg-blue-900 hover:bg-blue-800 text-white hover:scale-110 shadow-blue-900/40'
+        }`}
+        title={isSpeedDialOpen ? 'Close Menu' : 'Quick Add / Upload Action'}
         aria-label="Create New Entry"
       >
         <Plus className="w-6 h-6 stroke-[3]" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 ease-in-out font-bold text-xs pl-0 group-hover:pl-2">
-          New Entry
-        </span>
+        {!isSpeedDialOpen && (
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 ease-in-out font-bold text-xs pl-0 group-hover:pl-2">
+            Add / Upload
+          </span>
+        )}
       </button>
 
-      {/* UNIFIED CRUD MODAL */}
-      <TeacherCRUDModal
-        type={crudModalType}
+      {/* UNIFIED TEACHER ACTION MODAL (Supports Upload, Raw Data, Schemes, Lessons, CATs, Events, Students) */}
+      <UnifiedTeacherActionModal
+        isOpen={crudModalType !== null}
+        initialType={crudModalType as UnifiedTeacherActionType}
         initialData={editingItemData}
         onClose={() => {
           setCrudModalType(null);

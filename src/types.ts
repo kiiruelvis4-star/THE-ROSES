@@ -80,7 +80,7 @@ export type TermName = 'Term 1' | 'Term 2' | 'Term 3';
 export type CBCRating = 'EE' | 'ME' | 'AE' | 'BE'; // Exceeding Expectations, Meeting Expectations, Approaching Expectations, Below Expectations
 
 export type AppScreen = 'splash' | 'portal-select' | 'teacher' | 'admin' | 'learner';
-export type UserRole = 'teacher' | 'admin';
+export type UserRole = 'teacher' | 'admin' | 'learner' | 'parent';
 
 export type UnifiedResourceType = 
   | 'Schemes of Work'
@@ -202,9 +202,14 @@ export interface Student {
   grade: GradeLevel;
   avatar?: string;
   avatarUrl?: string;
+  password?: string;
   parentName?: string;
   parentPhone?: string;
+  parentEmail?: string;
   emergencyContact?: string;
+  homeAddress?: string;
+  medicalNotes?: string;
+  hobbiesAndTalents?: string;
   dob?: string;
   attendanceRate?: number; // percentage
   teacherRemarks?: string;
@@ -265,12 +270,18 @@ export interface RecordOfWork {
   term: TermName;
   week: number;
   lesson: number;
+  strand?: string;
+  subStrand?: string;
+  specificLearningOutcomes?: string;
+  keyInquiryQuestions?: string;
+  researchSource?: string;
   workPlanned: string;
   workCovered: string;
   challengesEncountered: string;
   remedialAction: string;
   teacherSignature: string;
   dateChecked: string;
+  remarksHeadteacher?: string;
 }
 
 export interface Assignment {
@@ -311,6 +322,7 @@ export interface ResourceItem {
   title: string;
   grade: GradeLevel;
   subject: SubjectName;
+  term?: TermName;
   category: 'Textbook' | 'Revision Paper' | 'Teaching Aid' | 'Lesson Notes' | 'Video Guide' | string;
   fileType?: 'pdf' | 'doc' | 'image' | 'video' | 'link' | 'markdown';
   inputType?: 'PDF_ATTACHMENT' | 'RAW_TEXT_AI_COPY';
@@ -346,6 +358,9 @@ export interface CalendarEvent {
   title: string;
   date: string; // YYYY-MM-DD
   endDate?: string;
+  startTime?: string; // e.g. "08:00 AM" or "08:30"
+  endTime?: string;   // e.g. "09:30 AM" or "10:00"
+  location?: string;
   category: 'Term Date' | 'Exams / CAT' | 'Co-Curricular' | 'Holiday' | 'PTA Meeting' | string;
   description: string;
   term?: TermName;
@@ -438,6 +453,24 @@ export interface RolesAndPermissionsConfig {
     };
     permissions: TeacherPermissions;
   };
+}
+
+export interface TeacherDocumentItem {
+  id: string;
+  title: string;
+  category: 'scheme' | 'lesson' | 'cat' | 'exam' | 'record' | 'handout' | 'curriculum' | 'other';
+  grade: GradeLevel;
+  subject: SubjectName;
+  term: TermName;
+  week?: number;
+  fileName: string;
+  fileSize: string;
+  fileType: string;
+  fileDataUrl?: string;
+  rawText?: string;
+  uploadedAt: string;
+  teacherName: string;
+  description?: string;
 }
 
 export interface ResourceInputTypeConfig {

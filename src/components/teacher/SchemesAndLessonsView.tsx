@@ -32,20 +32,23 @@ import {
   School,
   UserCheck,
   Users,
-  UploadCloud
+  UploadCloud,
+  Upload,
+  FolderArchive
 } from 'lucide-react';
 import { storage } from '../../services/storageService';
 import { LessonPlanSheetModal } from './LessonPlanSheetModal';
 import { RawSchemeQuickUpload } from './RawSchemeQuickUpload';
+import { TeacherDocumentsView } from './TeacherDocumentsView';
 import { getRationalizedSubjectsForGrade } from '../../data/cbeRationalizedCurriculumData';
 
 interface SchemesAndLessonsViewProps {
   schemes: SchemeOfWork[];
   lessons: LessonPlan[];
   records: RecordOfWork[];
-  initialSubTab?: 'schemes' | 'lessons' | 'records' | 'rawUpload';
-  onOpenCreateModal: (type: 'scheme' | 'lesson' | 'record') => void;
-  onOpenEditModal: (type: 'scheme' | 'lesson' | 'record', item: any) => void;
+  initialSubTab?: 'schemes' | 'lessons' | 'records' | 'rawUpload' | 'documents';
+  onOpenCreateModal: (type: 'scheme' | 'lesson' | 'record' | 'upload' | 'raw' | 'cat' | any) => void;
+  onOpenEditModal: (type: 'scheme' | 'lesson' | 'record' | any, item: any) => void;
 }
 
 const TERMS: TermName[] = ['Term 1', 'Term 2', 'Term 3'];
@@ -59,7 +62,7 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
   onOpenCreateModal,
   onOpenEditModal
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'schemes' | 'lessons' | 'records' | 'rawUpload'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'schemes' | 'lessons' | 'records' | 'rawUpload' | 'documents'>(initialSubTab);
   
   // System config state
   const [systemConfig, setSystemConfig] = useState<SystemConfig>(() => storage.getSystemConfig());
@@ -409,10 +412,39 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
               Live Clock
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveSubTab('documents')}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeSubTab === 'documents'
+                ? 'bg-blue-900 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <FolderArchive className="w-4 h-4 text-amber-400" />
+            <span className="whitespace-nowrap">Documents & Uploads</span>
+          </button>
         </div>
 
         {/* Action Buttons Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Universal Quick Upload and Raw Data Actions */}
+          <button
+            onClick={() => onOpenCreateModal('upload')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black shadow-xs transition-all active:scale-95"
+            title="Upload Documents (PDF, Word, CATs, Schemes, Lesson Plans)"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Upload</span>
+          </button>
+          <button
+            onClick={() => onOpenCreateModal('raw')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded-xl text-xs font-black shadow-xs transition-all active:scale-95"
+            title="Paste Raw Syllabus / CAT / Lesson Notes with Live Clock"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Raw Data</span>
+          </button>
           {activeSubTab === 'schemes' && (
             <>
               {/* Table / Card View Toggle */}
@@ -605,6 +637,16 @@ export const SchemesAndLessonsView: React.FC<SchemesAndLessonsViewProps> = ({
       {/* ==================================================================== */}
       {activeSubTab === 'rawUpload' && (
         <RawSchemeQuickUpload teacherName={storage.getActiveTeacherProfile().name} />
+      )}
+
+      {/* ==================================================================== */}
+      {/* 5. CONTENT: TEACHER DOCUMENTS & UPLOADS REPOSITORY                   */}
+      {/* ==================================================================== */}
+      {activeSubTab === 'documents' && (
+        <TeacherDocumentsView 
+          onOpenUploadModal={() => onOpenCreateModal('upload')}
+          onOpenRawModal={() => onOpenCreateModal('raw')}
+        />
       )}
 
       {/* ==================================================================== */}

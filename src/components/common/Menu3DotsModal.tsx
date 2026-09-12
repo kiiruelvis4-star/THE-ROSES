@@ -30,7 +30,7 @@ interface Menu3DotsModalProps {
   onSwitchPortal?: (role: 'teacher' | 'admin') => void;
   onSwitchRole?: (role: 'teacher' | 'admin') => void;
   onSignOut?: () => void;
-  currentRole?: 'teacher' | 'admin' | null;
+  currentRole?: 'teacher' | 'admin' | 'learner' | 'parent' | null;
 }
 
 export const Menu3DotsModal: React.FC<Menu3DotsModalProps> = ({

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Student, STANDARD_SUBJECTS } from '../../types';
+import { Student } from '../../types';
 import { 
   TrendingUp, 
   ArrowLeft, 
@@ -8,10 +8,11 @@ import {
   AlertCircle, 
   Sparkles, 
   BarChart3, 
-  Target,
+  Target, 
   Zap
 } from 'lucide-react';
 import { calculateStudentOverallPercentage, getCBCRating, CBC_SUBJECT_COLORS } from '../../data/initialData';
+import { getSubjectsForGrade, getSubjectScore } from '../../services/subjectOrder';
 
 interface LearnerProgressAnalyticsViewProps {
   student: Student;
@@ -26,8 +27,9 @@ export const LearnerProgressAnalyticsView: React.FC<LearnerProgressAnalyticsView
   const overallRating = getCBCRating(overallPct);
 
   // Analyze subject performances
-  const subjectScores = STANDARD_SUBJECTS.map(sub => {
-    const marks = student.catMarks[sub] || { cat1: 0, cat2: 0, endTerm: 0 };
+  const subjects = getSubjectsForGrade(student.grade);
+  const subjectScores = subjects.map(sub => {
+    const marks = getSubjectScore(student.catMarks, sub);
     const pct = Math.round((marks.cat1 / 30) * 20 + (marks.cat2 / 30) * 20 + (marks.endTerm / 100) * 60);
     return { subject: sub, score: pct, rating: getCBCRating(pct) };
   });

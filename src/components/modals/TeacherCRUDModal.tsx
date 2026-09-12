@@ -116,6 +116,9 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
   // 7. CALENDAR EVENT
   const [eventTitle, setEventTitle] = useState(initialData?.title || '');
   const [eventDate, setEventDate] = useState(initialData?.date || '2026-03-10');
+  const [eventStartTime, setEventStartTime] = useState(initialData?.startTime || '08:00');
+  const [eventEndTime, setEventEndTime] = useState(initialData?.endTime || '10:00');
+  const [eventLocation, setEventLocation] = useState(initialData?.location || 'School Assembly Grounds');
   const [eventCategory, setEventCategory] = useState(initialData?.category || 'Term Date');
   const [eventDesc, setEventDesc] = useState(initialData?.description || '');
 
@@ -229,6 +232,9 @@ export const TeacherCRUDModal: React.FC<TeacherCRUDModalProps> = ({
         id: initialData?.id || `ev-${Date.now()}`,
         title: eventTitle || 'School Event',
         date: eventDate,
+        startTime: eventStartTime,
+        endTime: eventEndTime,
+        location: eventLocation,
         category: eventCategory,
         description: eventDesc || 'Little Roses Academy academic calendar activity.'
       };
@@ -1152,6 +1158,38 @@ Learners successfully applied core skills during group practicals.`;
                     <option value="PTA Meeting">PTA Meeting</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={eventStartTime}
+                    onChange={(e) => setEventStartTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={eventEndTime}
+                    onChange={(e) => setEventEndTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Location / Venue</label>
+                <input
+                  type="text"
+                  placeholder="e.g. School Assembly Grounds / Room 6A / Hall"
+                  value={eventLocation}
+                  onChange={(e) => setEventLocation(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-900 dark:text-white"
+                />
               </div>
 
               <div>
